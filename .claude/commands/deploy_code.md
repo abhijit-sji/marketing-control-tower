@@ -1,0 +1,1 @@
+Prepare the code to be deployed, first pull the latest code from the branch, commit the files and push the code to the branch. Take user inputs if wherever required 

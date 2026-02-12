@@ -1,0 +1,14 @@
+INSERT INTO feedback_reports (type, subject, description, priority, status, module)
+VALUES 
+('bug', 'Permissive INSERT policy on feedback_reports', 'The WITH CHECK (true) policy allows any authenticated user to insert feedback as any user, enabling impersonation. Fix: Change to WITH CHECK (auth.uid() = created_by).', 'critical', 'open', 'Database Security'),
+('bug', 'Plaintext password exposed in user_activecollab_settings', 'The activecollab_password column is readable by users. Solution: Create a view excluding this column and deny direct table SELECT.', 'critical', 'open', 'Database Security'),
+('bug', 'Bearer token exposed in activecollab_credentials', 'The bearer_token and password_encrypted columns are readable by all authenticated users. Create a view excluding secrets.', 'critical', 'open', 'Database Security'),
+('bug', 'OAuth tokens exposed in brand_analytics_integrations', 'access_token_encrypted, refresh_token_encrypted, service_account_key_encrypted, and webhook_secret are readable. Create a view without secrets.', 'critical', 'open', 'Database Security'),
+('bug', 'API key exposed in gohighlevel_integrations', 'api_key_encrypted column is readable by the owning user. Should only be accessible via edge functions.', 'critical', 'open', 'Database Security'),
+('bug', 'API keys exposed in control_tower_api_keys', 'api_key_encrypted is readable by managers. Create view with only metadata columns.', 'critical', 'open', 'Database Security'),
+('bug', 'API key exposed in n8n_workflow_configs', 'api_key_encrypted readable by managers. Should be accessed only via edge functions.', 'critical', 'open', 'Database Security'),
+('bug', 'PII exposed in users table', 'salary, address, emergency_contact, and other personal data readable by managers. Consider field-level access control.', 'high', 'open', 'Database Security'),
+('bug', 'Employee PII broadly accessible', 'Phone, email, location data readable by all authenticated users. Consider restricting to HR/managers only.', 'high', 'open', 'Database Security'),
+('bug', 'Client contacts PII exposed', 'Email and phone of client contacts readable by all. Consider restricting to assigned team members.', 'high', 'open', 'Database Security'),
+('bug', 'Financial data exposed in clients table', 'monthly_billing, total_revenue, company_revenue readable by all authenticated users. Should be manager-only.', 'high', 'open', 'Database Security'),
+('bug', 'AI configurations readable by all users', 'ai_configurations table allows all authenticated users to read. Contains potentially sensitive AI prompts and API configs.', 'medium', 'open', 'Database Security');
