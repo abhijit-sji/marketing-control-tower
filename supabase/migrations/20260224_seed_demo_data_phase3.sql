@@ -90,7 +90,7 @@ INSERT INTO public.projects (
    'Comprehensive Q1 2026 marketing campaign including content, ads, and email',
    'client-001-0000-0000-000000000001'::uuid, 'active',
    '2026-01-01'::date, '2026-03-31'::date, 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::uuid,
-   ('[' || :admin_id::text || ', ' || :brand_manager_id::text || ']')::jsonb,
+   ('[' || '500b4a7f-4c4a-429e-a307-0601568c8525'::text || ', ' || 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'::text || ']')::jsonb,
    jsonb_build_object('budget', 75000, 'deliverables', ARRAY['20 LinkedIn posts', '10 SEO blogs', '3 videos']),
    NOW() - INTERVAL '60 days', NOW() - INTERVAL '60 days'),
 
@@ -98,7 +98,7 @@ INSERT INTO public.projects (
    'Complete brand identity refresh and messaging update',
    'client-001-0000-0000-000000000001'::uuid, 'active',
    '2026-02-01'::date, '2026-04-30'::date, 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::uuid,
-   ('[' || :brand_manager_id::text || ', ' || :manager_id::text || ']')::jsonb,
+   ('[' || 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'::text || ', ' || 'a6e7f8c9-daeb-4f2g-c3h4-e5f6a7b8c9d0'::text || ']')::jsonb,
    jsonb_build_object('budget', 50000, 'deliverables', ARRAY['Brand guidelines', 'New logo', 'Messaging framework']),
    NOW() - INTERVAL '50 days', NOW() - INTERVAL '50 days'),
 
@@ -107,7 +107,7 @@ INSERT INTO public.projects (
    'Ongoing content marketing and thought leadership program',
    'client-002-0000-0000-000000000002'::uuid, 'active',
    '2026-01-15'::date, '2026-12-31'::date, 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::uuid,
-   ('[' || :pm_id::text || ', ' || :brand_manager_id::text || ']')::jsonb,
+   ('[' || 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::text || ', ' || 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'::text || ']')::jsonb,
    jsonb_build_object('budget', 120000, 'monthly_deliverables', ARRAY['4 SEO blogs', '8 LinkedIn posts', '1 whitepaper']),
    NOW() - INTERVAL '40 days', NOW() - INTERVAL '40 days'),
 
@@ -116,7 +116,7 @@ INSERT INTO public.projects (
    'Campaign to promote new analytics dashboard features',
    'client-003-0000-0000-000000000003'::uuid, 'active',
    '2026-02-15'::date, '2026-06-30'::date, 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::uuid,
-   ('[' || :pm_id::text || ']')::jsonb,
+   ('[' || 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::text || ']')::jsonb,
    jsonb_build_object('budget', 60000, 'phase', 'Awareness & Education'),
    NOW() - INTERVAL '35 days', NOW() - INTERVAL '35 days'),
 
@@ -125,7 +125,7 @@ INSERT INTO public.projects (
    'B2B campaign targeting enterprise security buyers',
    'client-004-0000-0000-000000000004'::uuid, 'active',
    '2026-01-20'::date, '2026-09-30'::date, 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::uuid,
-   ('[' || :pm_id::text || ', ' || :brand_manager_id::text || ', ' || :manager_id::text || ']')::jsonb,
+   ('[' || 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::text || ', ' || 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'::text || ', ' || 'a6e7f8c9-daeb-4f2g-c3h4-e5f6a7b8c9d0'::text || ']')::jsonb,
    jsonb_build_object('budget', 150000, 'segment', 'Enterprise'),
    NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days')
 ON CONFLICT (slug) DO NOTHING;

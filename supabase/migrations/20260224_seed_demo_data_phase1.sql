@@ -438,7 +438,7 @@ INSERT INTO public.agent_memories (
    'User prefers technical depth over simplification. They appreciate discussions of system architecture and performance optimization.',
    '[0.1, 0.2, 0.15, -0.05, 0.0, 0.1, 0.15, 0.2, 0.05, 0.1]'::vector(10),
    ARRAY['user-preference', 'technical-depth', 'architecture'],
-   jsonb_build_object('user_id', :brand_manager_id::text, 'brand', 'TechBlog'),
+   jsonb_build_object('user_id', 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'::text, 'brand', 'TechBlog'),
    NOW() - INTERVAL '30 days'),
 
   ('mem-002-0000-0000-000000000002'::uuid, 'agent-001-0000-0000-000000000001'::uuid,
