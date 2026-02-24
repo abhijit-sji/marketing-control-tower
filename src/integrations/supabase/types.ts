@@ -4155,6 +4155,45 @@ export type Database = {
           },
         ]
       }
+      weekly_content_ideas: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          headline: string
+          id: string
+          is_active: boolean | null
+          leader_id: string | null
+          source_urls: string[] | null
+          week_end_date: string
+          week_start_date: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          headline: string
+          id?: string
+          is_active?: boolean | null
+          leader_id?: string | null
+          source_urls?: string[] | null
+          week_end_date: string
+          week_start_date: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          headline?: string
+          id?: string
+          is_active?: boolean | null
+          leader_id?: string | null
+          source_urls?: string[] | null
+          week_end_date?: string
+          week_start_date?: string
+        }
+        Relationships: []
+      }
       weekly_trends: {
         Row: {
           created_at: string | null
