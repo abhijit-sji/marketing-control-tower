@@ -11,12 +11,12 @@
 -- =====================================================
 -- DEMO USER IDs (from earlier phases)
 -- =====================================================
-
-\set admin_id '500b4a7f-4c4a-429e-a307-0601568c8525'
-\set user_id 'b31fefe1-d78f-4160-85d3-298bccf9e02e'
-\set pm_id 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'
-\set brand_manager_id 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'
-\set manager_id 'a6e7f8c9-daeb-4f2g-c3h4-e5f6a7b8c9d0'
+-- UUID Mapping (replace with actual auth user IDs if different):
+-- admin_id: 500b4a7f-4c4a-429e-a307-0601568c8525
+-- user_id: b31fefe1-d78f-4160-85d3-298bccf9e02e
+-- pm_id: e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8
+-- brand_manager_id: f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9
+-- manager_id: a6e7f8c9-daeb-4f2g-c3h4-e5f6a7b8c9d0
 
 -- =====================================================
 -- 1. ACTIVECOLLAB PROJECTS (Mock synced projects)
@@ -253,16 +253,16 @@ INSERT INTO public.pods (
   updated_at
 ) VALUES
   ('pod-001-0000-0000-000000000001'::uuid, 'Strategy & Planning', 'strategy-planning',
-   'Strategic initiatives and annual planning', :pm_id::uuid, 'active', NOW() - INTERVAL '90 days', NOW() - INTERVAL '90 days'),
+   'Strategic initiatives and annual planning', 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::uuid, 'active', NOW() - INTERVAL '90 days', NOW() - INTERVAL '90 days'),
 
   ('pod-002-0000-0000-000000000002'::uuid, 'Content Creation', 'content-creation',
-   'Content production and creative team', :brand_manager_id::uuid, 'active', NOW() - INTERVAL '90 days', NOW() - INTERVAL '90 days'),
+   'Content production and creative team', 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'::uuid, 'active', NOW() - INTERVAL '90 days', NOW() - INTERVAL '90 days'),
 
   ('pod-003-0000-0000-000000000003'::uuid, 'Technology & Innovation', 'tech-innovation',
-   'Engineering and tech infrastructure', :admin_id::uuid, 'active', NOW() - INTERVAL '90 days', NOW() - INTERVAL '90 days'),
+   'Engineering and tech infrastructure', '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'active', NOW() - INTERVAL '90 days', NOW() - INTERVAL '90 days'),
 
   ('pod-004-0000-0000-000000000004'::uuid, 'Operations & Support', 'operations-support',
-   'Operations, HR, and support functions', :manager_id::uuid, 'active', NOW() - INTERVAL '90 days', NOW() - INTERVAL '90 days')
+   'Operations, HR, and support functions', 'a6e7f8c9-daeb-4f2g-c3h4-e5f6a7b8c9d0'::uuid, 'active', NOW() - INTERVAL '90 days', NOW() - INTERVAL '90 days')
 ON CONFLICT (slug) DO NOTHING;
 
 -- =====================================================
@@ -342,7 +342,7 @@ INSERT INTO public.hackathon_events (
   created_at
 ) VALUES
   ('hackathon-001-0000-0000-000000000001'::uuid, 'SJ Innovation Hackathon 2026', 'Internal hackathon for innovation and learning',
-   '2026-03-15'::date, '2026-03-17'::date, 'active', 50, :admin_id::uuid, NOW() - INTERVAL '30 days')
+   '2026-03-15'::date, '2026-03-17'::date, 'active', 50, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '30 days')
 ON CONFLICT (id) DO NOTHING;
 
 -- =====================================================

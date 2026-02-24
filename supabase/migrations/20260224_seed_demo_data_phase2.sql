@@ -11,12 +11,12 @@
 -- =====================================================
 -- DEMO USER IDs (from Phase 1)
 -- =====================================================
-
-\set admin_id '500b4a7f-4c4a-429e-a307-0601568c8525'
-\set user_id 'b31fefe1-d78f-4160-85d3-298bccf9e02e'
-\set pm_id 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'
-\set brand_manager_id 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'
-\set manager_id 'a6e7f8c9-daeb-4f2g-c3h4-e5f6a7b8c9d0'
+-- UUID Mapping (replace with actual auth user IDs if different):
+-- admin_id: 500b4a7f-4c4a-429e-a307-0601568c8525
+-- user_id: b31fefe1-d78f-4160-85d3-298bccf9e02e
+-- pm_id: e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8
+-- brand_manager_id: f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9
+-- manager_id: a6e7f8c9-daeb-4f2g-c3h4-e5f6a7b8c9d0
 
 -- =====================================================
 -- 1. LINKEDIN POSTS (30 posts across brands)
@@ -57,7 +57,7 @@ What''s your biggest Kubernetes challenge?',
    ARRAY['Benefits of early observability', 'Why CNI plugins matter', 'Resource limits best practices', 'StatefulSets deep dive', 'Security scanning importance'],
    ARRAY['#Kubernetes #DevOps #CloudNative', 'Have you faced Kubernetes scaling challenges?', 'Drop a comment with your biggest K8s lesson'],
    'custom', NULL,
-   'agent-001-0000-0000-000000000001'::uuid, :admin_id::uuid, 'gpt-4o',
+   'agent-001-0000-0000-000000000001'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'gpt-4o',
    NOW() - INTERVAL '35 days'),
 
   ('lpost-002-0000-0000-000000000002'::uuid, 'leader-001-0000-0000-000000000001'::uuid,
@@ -83,7 +83,7 @@ If the answer is "no" to most, you''re not ready yet.',
    ARRAY['Common microservices mistakes', 'When NOT to use microservices', 'Monolith vs microservices trade-offs', 'Domain-driven design basics', 'Cost optimization strategies'],
    ARRAY['#Architecture #Microservices #TechDebt', 'Microservices at your company: blessing or curse?', 'Share your architecture evolution story'],
    'custom', NULL,
-   'agent-001-0000-0000-000000000001'::uuid, :admin_id::uuid, 'gpt-4o',
+   'agent-001-0000-0000-000000000001'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'gpt-4o',
    NOW() - INTERVAL '33 days'),
 
   ('lpost-003-0000-0000-000000000003'::uuid, 'leader-001-0000-0000-000000000001'::uuid,
@@ -107,7 +107,7 @@ Which pattern are you using?',
    ARRAY['API Gateway explained', 'BFF pattern deep dive', 'Service Mesh introduction', 'Architecture trade-offs', 'Real-world implementation'],
    ARRAY['#APIDevelopment #SystemDesign #CloudArchitecture', 'API pattern: choosing wisely', 'What''s your architecture?'],
    'custom', NULL,
-   'agent-001-0000-0000-000000000001'::uuid, :admin_id::uuid, 'gpt-4o',
+   'agent-001-0000-0000-000000000001'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'gpt-4o',
    NOW() - INTERVAL '31 days'),
 
   -- Startup Stories (Leader: Sarah Martinez)
@@ -136,7 +136,7 @@ What''s your biggest pivot story?',
    ARRAY['The crisis moment', 'Customer research that saved us', 'How we pivoted', 'Early traction signals', 'The money moment'],
    ARRAY['#Startup #Entrepreneurship #Pivot', 'Startup pivots: when did you know?', 'Share your turnaround story'],
    'custom', NULL,
-   'agent-002-0000-0000-000000000002'::uuid, :admin_id::uuid, 'gpt-4o',
+   'agent-002-0000-0000-000000000002'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'gpt-4o',
    NOW() - INTERVAL '29 days'),
 
   ('lpost-005-0000-0000-000000000005'::uuid, 'leader-002-0000-0000-000000000002'::uuid,
@@ -165,7 +165,7 @@ Moral: Great execution beats market conditions.',
    ARRAY['Recession fundraising lessons', 'What metrics matter to VCs', 'Being contrarian', 'Founder conviction', 'Closing the deal'],
    ARRAY['#Fundraising #Startup #VenturCapital', 'Fundraising tips: what worked for you?', 'Recession survival stories'],
    'custom', NULL,
-   'agent-002-0000-0000-000000000002'::uuid, :admin_id::uuid, 'gpt-4o',
+   'agent-002-0000-0000-000000000002'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'gpt-4o',
    NOW() - INTERVAL '27 days')
 ON CONFLICT (id) DO NOTHING;
 
@@ -184,21 +184,21 @@ Started profiling. Wasn''t the query logic—we were missing a critical composit
 After understanding our access patterns and adding 3 strategic indexes, queries dropped to 45ms.
 
 Simple but powerful: think about HOW your data is QUERIED, not just how it''s stored.',
-   'custom', 'agent-001-0000-0000-000000000001'::uuid, :admin_id::uuid, 'gpt-4o', NOW() - INTERVAL '25 days'),
+   'custom', 'agent-001-0000-0000-000000000001'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'gpt-4o', NOW() - INTERVAL '25 days'),
 
   ('lpost-007-0000-0000-000000000007'::uuid, 'leader-001-0000-0000-000000000001'::uuid,
    'Rate Limiting: The Defensive Strategy Every API Needs',
    'One customer sent 100K requests in 10 minutes. Crashed our system.
 
 We implemented rate limiting with exponential backoff. Problem solved and our system became more resilient.',
-   'custom', 'agent-001-0000-0000-000000000001'::uuid, :admin_id::uuid, 'gpt-4o', NOW() - INTERVAL '23 days'),
+   'custom', 'agent-001-0000-0000-000000000001'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'gpt-4o', NOW() - INTERVAL '23 days'),
 
   ('lpost-008-0000-0000-000000000008'::uuid, 'leader-001-0000-0000-000000000001'::uuid,
    'Debugging Distributed Systems: Lessons from 100+ Production Incidents',
    'Distributed systems make debugging exponentially harder. Context matters. Logging matters. Tracing matters.
 
 Stack: ELK + Jaeger + custom correlation IDs = sanity.',
-   'custom', 'agent-001-0000-0000-000000000001'::uuid, :admin_id::uuid, 'gpt-4o', NOW() - INTERVAL '21 days'),
+   'custom', 'agent-001-0000-0000-000000000001'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'gpt-4o', NOW() - INTERVAL '21 days'),
 
   ('lpost-009-0000-0000-000000000009'::uuid, 'leader-002-0000-0000-000000000002'::uuid,
    'Founder Burnout Is Real: How I Almost Lost Everything',
@@ -209,14 +209,14 @@ I hit a wall. Couldn''t sleep. Couldn''t focus. Couldn''t think.
 Took 2 weeks off. Came back with clarity. Hired my co-founder a COO role to handle operations.
 
 Burnout doesn''t make you stronger—it makes you worse at your job.',
-   'custom', 'agent-002-0000-0000-000000000002'::uuid, :admin_id::uuid, 'gpt-4o', NOW() - INTERVAL '19 days'),
+   'custom', 'agent-002-0000-0000-000000000002'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'gpt-4o', NOW() - INTERVAL '19 days'),
 
   ('lpost-010-0000-0000-000000000010'::uuid, 'leader-002-0000-0000-000000000002'::uuid,
    'The Board Meeting That Changed My Perspective',
    'First board meeting was terrifying. Our advisors asked hard questions we didn''t have answers for.
 
 Instead of being defensive, I listened. Their perspective helped us refocus on what matters.',
-   'custom', 'agent-002-0000-0000-000000000002'::uuid, :admin_id::uuid, 'gpt-4o', NOW() - INTERVAL '17 days')
+   'custom', 'agent-002-0000-0000-000000000002'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'gpt-4o', NOW() - INTERVAL '17 days')
 ON CONFLICT (id) DO NOTHING;
 
 -- =====================================================
@@ -248,7 +248,7 @@ INSERT INTO public.seo_blog_content (
    ),
    ARRAY['kubernetes networking', 'pods', 'services', 'ingress controller', 'network policy', 'container networking'],
    'Complete guide to Kubernetes networking: pods, services, and ingress controllers for production deployments.',
-   :admin_id::uuid, 'brand-001-0000-0000-000000000001'::uuid, NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days'),
+   '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'brand-001-0000-0000-000000000001'::uuid, NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days'),
 
   ('blog-002-0000-0000-000000000002'::uuid,
    'Microservices vs Monolith: When to Split Your Architecture',
@@ -263,7 +263,7 @@ INSERT INTO public.seo_blog_content (
    ),
    ARRAY['microservices', 'monolithic architecture', 'system design', 'scalability', 'architecture patterns'],
    'When to use microservices vs monolithic architecture: decision factors and migration strategies.',
-   :admin_id::uuid, 'brand-001-0000-0000-000000000001'::uuid, NOW() - INTERVAL '28 days', NOW() - INTERVAL '28 days'),
+   '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'brand-001-0000-0000-000000000001'::uuid, NOW() - INTERVAL '28 days', NOW() - INTERVAL '28 days'),
 
   ('blog-003-0000-0000-000000000003'::uuid,
    'SEO Best Practices 2026: Algorithm Updates and Ranking Factors',
@@ -278,7 +278,7 @@ INSERT INTO public.seo_blog_content (
    ),
    ARRAY['seo', 'search engine optimization', 'google algorithm', 'ranking factors', 'technical seo', 'content seo'],
    'Latest SEO best practices for 2026: algorithm updates, Core Web Vitals, and ranking factors explained.',
-   :admin_id::uuid, 'brand-002-0000-0000-000000000002'::uuid, NOW() - INTERVAL '26 days', NOW() - INTERVAL '26 days')
+   '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'brand-002-0000-0000-000000000002'::uuid, NOW() - INTERVAL '26 days', NOW() - INTERVAL '26 days')
 ON CONFLICT (id) DO NOTHING;
 
 -- =====================================================
@@ -300,31 +300,31 @@ INSERT INTO public.ai_generated_images (
    'Professional headshot of a tech entrepreneur, modern office background, warm lighting',
    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1024',
    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
-   'openai', 'dall-e-3', '1024x1024', :admin_id::uuid, NOW() - INTERVAL '25 days'),
+   'openai', 'dall-e-3', '1024x1024', '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '25 days'),
 
   ('img-002-0000-0000-000000000002'::uuid,
    'Modern cloud infrastructure diagram, interconnected servers, digital art style',
    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1024',
    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=200',
-   'openai', 'dall-e-3', '1024x1024', :admin_id::uuid, NOW() - INTERVAL '23 days'),
+   'openai', 'dall-e-3', '1024x1024', '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '23 days'),
 
   ('img-003-0000-0000-000000000003'::uuid,
    'Team collaboration in modern startup office, diverse team, energetic atmosphere',
    'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1024',
    'https://images.unsplash.com/photo-1552664730-d307ca884978?w=200',
-   'gemini', 'gemini-image', '1024x1024', :admin_id::uuid, NOW() - INTERVAL '21 days'),
+   'gemini', 'gemini-image', '1024x1024', '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '21 days'),
 
   ('img-004-0000-0000-000000000004'::uuid,
    'Abstract data visualization, flowing information, digital design, blues and purples',
    'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1024',
    'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200',
-   'openai', 'dall-e-3', '1024x1024', :admin_id::uuid, NOW() - INTERVAL '19 days'),
+   'openai', 'dall-e-3', '1024x1024', '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '19 days'),
 
   ('img-005-0000-0000-000000000005'::uuid,
    'Marketing analytics dashboard, colorful metrics, professional design',
    'https://images.unsplash.com/photo-1460925895917-aeb19be489c7?w=1024',
    'https://images.unsplash.com/photo-1460925895917-aeb19be489c7?w=200',
-   'gemini', 'gemini-image', '1024x1024', :admin_id::uuid, NOW() - INTERVAL '17 days')
+   'gemini', 'gemini-image', '1024x1024', '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '17 days')
 ON CONFLICT (id) DO NOTHING;
 
 -- =====================================================
@@ -344,19 +344,19 @@ INSERT INTO public.sora_videos (
    'Timelapse of a startup office from empty to bustling with activity, energetic music, modern aesthetic',
    'https://example.com/videos/startup-timelapse.mp4',
    'https://example.com/videos/startup-timelapse-thumb.jpg',
-   45, :admin_id::uuid, NOW() - INTERVAL '20 days'),
+   45, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '20 days'),
 
   ('video-002-0000-0000-000000000002'::uuid,
    'Animated explainer video: How Kubernetes orchestrates containers, educational, clear graphics',
    'https://example.com/videos/kubernetes-explainer.mp4',
    'https://example.com/videos/kubernetes-explainer-thumb.jpg',
-   120, :admin_id::uuid, NOW() - INTERVAL '18 days'),
+   120, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '18 days'),
 
   ('video-003-0000-0000-000000000003'::uuid,
    'Customer testimonial video: Founder talking about product success, professional quality, 60-second duration',
    'https://example.com/videos/testimonial.mp4',
    'https://example.com/videos/testimonial-thumb.jpg',
-   60, :admin_id::uuid, NOW() - INTERVAL '16 days')
+   60, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '16 days')
 ON CONFLICT (id) DO NOTHING;
 
 -- =====================================================

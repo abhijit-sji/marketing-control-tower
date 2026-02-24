@@ -21,11 +21,12 @@
 -- These are the UUIDs used in the demo credentials migration
 -- Note: If auth users have different UUIDs, update these values
 
-\set admin_id '500b4a7f-4c4a-429e-a307-0601568c8525'
-\set user_id 'b31fefe1-d78f-4160-85d3-298bccf9e02e'
-\set pm_id 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'
-\set brand_manager_id 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'
-\set manager_id 'a6e7f8c9-daeb-4f2g-c3h4-e5f6a7b8c9d0'
+-- UUID Mapping:
+-- admin_id: 500b4a7f-4c4a-429e-a307-0601568c8525
+-- user_id: b31fefe1-d78f-4160-85d3-298bccf9e02e
+-- pm_id: e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8
+-- brand_manager_id: f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9
+-- manager_id: a6e7f8c9-daeb-4f2g-c3h4-e5f6a7b8c9d0
 
 -- =====================================================
 -- 1. ORGANIZATIONS
@@ -158,23 +159,23 @@ INSERT INTO public.user_brands (
   created_at
 ) VALUES
   -- Admin has access to all brands
-  ('ub-001-0000-0000-000000000001'::uuid, :admin_id::uuid, 'brand-001-0000-0000-000000000001'::uuid, 'admin', NOW() - INTERVAL '60 days'),
-  ('ub-002-0000-0000-000000000002'::uuid, :admin_id::uuid, 'brand-002-0000-0000-000000000002'::uuid, 'admin', NOW() - INTERVAL '60 days'),
-  ('ub-003-0000-0000-000000000003'::uuid, :admin_id::uuid, 'brand-003-0000-0000-000000000003'::uuid, 'admin', NOW() - INTERVAL '60 days'),
-  ('ub-004-0000-0000-000000000004'::uuid, :admin_id::uuid, 'brand-004-0000-0000-000000000004'::uuid, 'admin', NOW() - INTERVAL '60 days'),
-  ('ub-005-0000-0000-000000000005'::uuid, :admin_id::uuid, 'brand-005-0000-0000-000000000005'::uuid, 'admin', NOW() - INTERVAL '60 days'),
+  ('ub-001-0000-0000-000000000001'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'brand-001-0000-0000-000000000001'::uuid, 'admin', NOW() - INTERVAL '60 days'),
+  ('ub-002-0000-0000-000000000002'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'brand-002-0000-0000-000000000002'::uuid, 'admin', NOW() - INTERVAL '60 days'),
+  ('ub-003-0000-0000-000000000003'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'brand-003-0000-0000-000000000003'::uuid, 'admin', NOW() - INTERVAL '60 days'),
+  ('ub-004-0000-0000-000000000004'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'brand-004-0000-0000-000000000004'::uuid, 'admin', NOW() - INTERVAL '60 days'),
+  ('ub-005-0000-0000-000000000005'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, 'brand-005-0000-0000-000000000005'::uuid, 'admin', NOW() - INTERVAL '60 days'),
 
   -- Brand manager has access to 2 brands
-  ('ub-006-0000-0000-000000000006'::uuid, :brand_manager_id::uuid, 'brand-001-0000-0000-000000000001'::uuid, 'editor', NOW() - INTERVAL '55 days'),
-  ('ub-007-0000-0000-000000000007'::uuid, :brand_manager_id::uuid, 'brand-002-0000-0000-000000000002'::uuid, 'editor', NOW() - INTERVAL '55 days'),
+  ('ub-006-0000-0000-000000000006'::uuid, 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'::uuid, 'brand-001-0000-0000-000000000001'::uuid, 'editor', NOW() - INTERVAL '55 days'),
+  ('ub-007-0000-0000-000000000007'::uuid, 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'::uuid, 'brand-002-0000-0000-000000000002'::uuid, 'editor', NOW() - INTERVAL '55 days'),
 
   -- PM has access to tech brands
-  ('ub-008-0000-0000-000000000008'::uuid, :pm_id::uuid, 'brand-001-0000-0000-000000000001'::uuid, 'viewer', NOW() - INTERVAL '50 days'),
-  ('ub-009-0000-0000-000000000009'::uuid, :pm_id::uuid, 'brand-003-0000-0000-000000000003'::uuid, 'viewer', NOW() - INTERVAL '50 days'),
+  ('ub-008-0000-0000-000000000008'::uuid, 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::uuid, 'brand-001-0000-0000-000000000001'::uuid, 'viewer', NOW() - INTERVAL '50 days'),
+  ('ub-009-0000-0000-000000000009'::uuid, 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::uuid, 'brand-003-0000-0000-000000000003'::uuid, 'viewer', NOW() - INTERVAL '50 days'),
 
   -- Manager has access to creative brands
-  ('ub-010-0000-0000-000000000010'::uuid, :manager_id::uuid, 'brand-004-0000-0000-000000000004'::uuid, 'editor', NOW() - INTERVAL '45 days'),
-  ('ub-011-0000-0000-000000000011'::uuid, :manager_id::uuid, 'brand-005-0000-0000-000000000005'::uuid, 'editor', NOW() - INTERVAL '45 days')
+  ('ub-010-0000-0000-000000000010'::uuid, 'a6e7f8c9-daeb-4f2g-c3h4-e5f6a7b8c9d0'::uuid, 'brand-004-0000-0000-000000000004'::uuid, 'editor', NOW() - INTERVAL '45 days'),
+  ('ub-011-0000-0000-000000000011'::uuid, 'a6e7f8c9-daeb-4f2g-c3h4-e5f6a7b8c9d0'::uuid, 'brand-005-0000-0000-000000000005'::uuid, 'editor', NOW() - INTERVAL '45 days')
 ON CONFLICT (user_id, brand_id) DO NOTHING;
 
 -- =====================================================
@@ -220,51 +221,51 @@ INSERT INTO public.knowledge_base (
 ) VALUES
   ('kb-001-0000-0000-000000000001'::uuid, 'Company Mission & Values',
    'Our mission is to empower marketing teams with AI-driven solutions. Our values: Innovation, Integrity, Impact, Collaboration.',
-   'kbc-001-0000-0000-000000000001'::uuid, NULL, ARRAY['mission', 'values', 'company'], true, :admin_id::uuid, NOW() - INTERVAL '45 days', NOW() - INTERVAL '45 days'),
+   'kbc-001-0000-0000-000000000001'::uuid, NULL, ARRAY['mission', 'values', 'company'], true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '45 days', NOW() - INTERVAL '45 days'),
 
   ('kb-002-0000-0000-000000000002'::uuid, 'Product Overview',
    'SJ Marketing AI is a comprehensive platform for AI-powered content generation, client management, and analytics integration.',
-   'kbc-001-0000-0000-000000000001'::uuid, NULL, ARRAY['product', 'overview'], true, :admin_id::uuid, NOW() - INTERVAL '45 days', NOW() - INTERVAL '45 days'),
+   'kbc-001-0000-0000-000000000001'::uuid, NULL, ARRAY['product', 'overview'], true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '45 days', NOW() - INTERVAL '45 days'),
 
   ('kb-003-0000-0000-000000000003'::uuid, 'REST API Reference',
    'Complete REST API documentation with authentication, rate limiting, and example requests. Base URL: https://api.example.com/v1',
-   'kbc-006-0000-0000-000000000006'::uuid, 'https://docs.example.com/api', ARRAY['api', 'rest', 'technical'], true, :admin_id::uuid, NOW() - INTERVAL '40 days', NOW() - INTERVAL '40 days'),
+   'kbc-006-0000-0000-000000000006'::uuid, 'https://docs.example.com/api', ARRAY['api', 'rest', 'technical'], true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '40 days', NOW() - INTERVAL '40 days'),
 
   ('kb-004-0000-0000-000000000004'::uuid, 'Coding Standards',
    'Our codebase uses React 18, TypeScript, and follows ESLint configuration. Use functional components with hooks.',
-   'kbc-007-0000-0000-000000000007'::uuid, NULL, ARRAY['standards', 'coding', 'best-practices'], true, :admin_id::uuid, NOW() - INTERVAL '38 days', NOW() - INTERVAL '38 days'),
+   'kbc-007-0000-0000-000000000007'::uuid, NULL, ARRAY['standards', 'coding', 'best-practices'], true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '38 days', NOW() - INTERVAL '38 days'),
 
   ('kb-005-0000-0000-000000000005'::uuid, 'AI Providers Guide',
    'We use OpenAI, Google Gemini, Anthropic Claude, and Perplexity. Each has different strengths and rate limits.',
-   'kbc-003-0000-0000-000000000003'::uuid, NULL, ARRAY['ai', 'providers', 'models'], true, :admin_id::uuid, NOW() - INTERVAL '35 days', NOW() - INTERVAL '35 days'),
+   'kbc-003-0000-0000-000000000003'::uuid, NULL, ARRAY['ai', 'providers', 'models'], true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '35 days', NOW() - INTERVAL '35 days'),
 
   ('kb-006-0000-0000-000000000006'::uuid, 'Brand Voice Guidelines',
    'Tech brand voice should be: professional, approachable, innovative. Avoid jargon unless necessary. Use active voice.',
-   'kbc-008-0000-0000-000000000008'::uuid, NULL, ARRAY['brand', 'voice', 'guidelines', 'tech'], true, :admin_id::uuid, NOW() - INTERVAL '32 days', NOW() - INTERVAL '32 days'),
+   'kbc-008-0000-0000-000000000008'::uuid, NULL, ARRAY['brand', 'voice', 'guidelines', 'tech'], true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '32 days', NOW() - INTERVAL '32 days'),
 
   ('kb-007-0000-0000-000000000007'::uuid, 'LinkedIn Best Practices 2026',
    'LinkedIn algorithm favors: authentic content, native video, engagement. Avoid links in caption. Post 2-3x weekly.',
-   'kbc-009-0000-0000-000000000009'::uuid, NULL, ARRAY['linkedin', 'social-media', 'best-practices'], true, :admin_id::uuid, NOW() - INTERVAL '28 days', NOW() - INTERVAL '28 days'),
+   'kbc-009-0000-0000-000000000009'::uuid, NULL, ARRAY['linkedin', 'social-media', 'best-practices'], true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '28 days', NOW() - INTERVAL '28 days'),
 
   ('kb-008-0000-0000-000000000008'::uuid, 'SaaS Marketing Strategy',
    'Focus on ROI, case studies, free trials, and community building. Product-led growth with freemium model.',
-   'kbc-003-0000-0000-000000000003'::uuid, NULL, ARRAY['saas', 'marketing', 'strategy'], true, :admin_id::uuid, NOW() - INTERVAL '25 days', NOW() - INTERVAL '25 days'),
+   'kbc-003-0000-0000-000000000003'::uuid, NULL, ARRAY['saas', 'marketing', 'strategy'], true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '25 days', NOW() - INTERVAL '25 days'),
 
   ('kb-009-0000-0000-000000000009'::uuid, 'Client Case Study Template',
    'Structure: Challenge, Solution, Results (with metrics). Use specific numbers, avoid generic claims.',
-   'kbc-005-0000-0000-000000000005'::uuid, NULL, ARRAY['case-study', 'template', 'template'], true, :admin_id::uuid, NOW() - INTERVAL '20 days', NOW() - INTERVAL '20 days'),
+   'kbc-005-0000-0000-000000000005'::uuid, NULL, ARRAY['case-study', 'template', 'template'], true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '20 days', NOW() - INTERVAL '20 days'),
 
   ('kb-010-0000-0000-000000000010'::uuid, 'Email Marketing Guidelines',
    'Subject line <50 chars, body <150 words. CTA prominent. A/B test subject lines. Send Tuesday-Thursday 10am-2pm.',
-   'kbc-004-0000-0000-000000000004'::uuid, NULL, ARRAY['email', 'marketing', 'guidelines'], true, :admin_id::uuid, NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days'),
+   'kbc-004-0000-0000-000000000004'::uuid, NULL, ARRAY['email', 'marketing', 'guidelines'], true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days'),
 
   ('kb-011-0000-0000-000000000011'::uuid, 'Emerging Tech Trends Q1 2026',
    'AI in marketing, GenAI democratization, privacy regulations, first-party data, video content dominance.',
-   'kbc-003-0000-0000-000000000003'::uuid, NULL, ARRAY['trends', 'q1-2026', 'industry'], true, :admin_id::uuid, NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'),
+   'kbc-003-0000-0000-000000000003'::uuid, NULL, ARRAY['trends', 'q1-2026', 'industry'], true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'),
 
   ('kb-012-0000-0000-000000000012'::uuid, 'Design System Colors',
    'Primary: #1F2937 (dark-gray), Secondary: #3B82F6 (blue), Accent: #F59E0B (amber). Use 4 color variations each.',
-   'kbc-004-0000-0000-000000000004'::uuid, NULL, ARRAY['design', 'colors', 'system'], true, :admin_id::uuid, NOW() - INTERVAL '8 days', NOW() - INTERVAL '8 days')
+   'kbc-004-0000-0000-000000000004'::uuid, NULL, ARRAY['design', 'colors', 'system'], true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW() - INTERVAL '8 days', NOW() - INTERVAL '8 days')
 ON CONFLICT (id) DO NOTHING;
 
 -- =====================================================
@@ -291,21 +292,21 @@ INSERT INTO public.ai_agents (
    'Generates professional tech-focused LinkedIn posts with industry insights',
    'linkedin',
    'You are an expert tech content creator. Write engaging LinkedIn posts that educate and inspire. Focus on actionable insights. Keep tone professional but approachable.',
-   'openai', 'gpt-4o', true, :admin_id::uuid,
+   'openai', 'gpt-4o', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-003-0000-0000-000000000003", "kbc-006-0000-0000-000000000006"]'::jsonb, 'gemini', NOW() - INTERVAL '50 days', NOW() - INTERVAL '50 days'),
 
   ('agent-002-0000-0000-000000000002'::uuid, 'LinkedIn Startup Stories',
    'Creates inspiring founder stories and startup journey narratives',
    'linkedin',
    'You are a storyteller specializing in startup narratives. Write compelling LinkedIn posts about founder journeys, challenges, and victories. Make stories relatable and authentic.',
-   'gemini', 'gemini-2.0-pro', true, :admin_id::uuid,
+   'gemini', 'gemini-2.0-pro', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-003-0000-0000-000000000003", "kbc-005-0000-0000-000000000005"]'::jsonb, 'openai', NOW() - INTERVAL '48 days', NOW() - INTERVAL '48 days'),
 
   ('agent-003-0000-0000-000000000003'::uuid, 'LinkedIn Design Inspiration',
    'Generates design-focused content with visual inspiration and trends',
    'linkedin',
    'You are a design thought leader. Create LinkedIn posts about design trends, UX/UI principles, and creative innovation. Include specific examples and actionable tips.',
-   'anthropic', 'claude-3-5-sonnet', true, :admin_id::uuid,
+   'anthropic', 'claude-3-5-sonnet', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-003-0000-0000-000000000003", "kbc-004-0000-0000-000000000004"]'::jsonb, 'openai', NOW() - INTERVAL '46 days', NOW() - INTERVAL '46 days'),
 
   -- SEO Content Agents
@@ -313,7 +314,7 @@ INSERT INTO public.ai_agents (
    'Creates SEO-optimized blog posts with keyword research and internal linking',
    'seo',
    'You are an expert SEO copywriter. Write comprehensive blog posts optimized for search engines. Include headers, meta descriptions, and internal link suggestions. Target keyword density 1-2%.',
-   'openai', 'gpt-4o', true, :admin_id::uuid,
+   'openai', 'gpt-4o', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-007-0000-0000-000000000007", "kbc-003-0000-0000-000000000003"]'::jsonb, 'gemini', NOW() - INTERVAL '44 days', NOW() - INTERVAL '44 days'),
 
   -- Business Analysis Agents
@@ -321,14 +322,14 @@ INSERT INTO public.ai_agents (
    'Analyzes business metrics and generates executive summaries',
    'business_analysis',
    'You are a business analyst. Review provided metrics and data, then create clear, actionable executive summaries highlighting trends, opportunities, and risks.',
-   'openai', 'gpt-4o', true, :admin_id::uuid,
+   'openai', 'gpt-4o', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-001-0000-0000-000000000001", "kbc-003-0000-0000-000000000003"]'::jsonb, 'claude', NOW() - INTERVAL '42 days', NOW() - INTERVAL '42 days'),
 
   ('agent-006-0000-0000-000000000006'::uuid, 'Client Email Summary',
    'Generates personalized client update emails with project progress',
    'client_email',
    'You are a professional communicator. Create warm, informative client emails summarizing project progress, key wins, and next steps. Keep tone professional and encouraging.',
-   'gemini', 'gemini-2.0-pro', true, :admin_id::uuid,
+   'gemini', 'gemini-2.0-pro', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-001-0000-0000-000000000001"]'::jsonb, 'openai', NOW() - INTERVAL '40 days', NOW() - INTERVAL '40 days'),
 
   -- Specialized Agents
@@ -336,28 +337,28 @@ INSERT INTO public.ai_agents (
    'Generates engaging weekly newsletter content with curated insights',
    'newsletter',
    'You are a newsletter expert. Create engaging weekly email newsletters with curated industry news, actionable tips, and community highlights. Keep it scannable and interesting.',
-   'openai', 'gpt-4o', true, :admin_id::uuid,
+   'openai', 'gpt-4o', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-003-0000-0000-000000000003"]'::jsonb, 'gemini', NOW() - INTERVAL '38 days', NOW() - INTERVAL '38 days'),
 
   ('agent-008-0000-0000-000000000008'::uuid, 'Social Media Caption Writer',
    'Creates platform-specific social media captions and hashtags',
    'social_media',
    'You are a social media expert. Write platform-specific captions (Instagram, TikTok, Twitter) that drive engagement. Include trending hashtags and emojis appropriately.',
-   'anthropic', 'claude-3-5-sonnet', true, :admin_id::uuid,
+   'anthropic', 'claude-3-5-sonnet', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-004-0000-0000-000000000004"]'::jsonb, 'openai', NOW() - INTERVAL '36 days', NOW() - INTERVAL '36 days'),
 
   ('agent-009-0000-0000-000000000009'::uuid, 'Trend Analysis Agent',
    'Identifies and analyzes emerging market trends for content strategy',
    'trend_analysis',
    'You are a trend analyst. Research and identify emerging trends relevant to the industry. Provide analysis of impact, timing, and actionable opportunities.',
-   'perplexity', 'sonar-reasoning-pro', true, :admin_id::uuid,
+   'perplexity', 'sonar-reasoning-pro', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-003-0000-0000-000000000003"]'::jsonb, 'openai', NOW() - INTERVAL '34 days', NOW() - INTERVAL '34 days'),
 
   ('agent-010-0000-0000-000000000010'::uuid, 'Case Study Generator',
    'Creates compelling case studies from client success stories',
    'case_study',
    'You are a marketing writer specializing in case studies. Structure case studies with: Challenge, Solution, Results. Use specific metrics and quotes. Make them client-approved ready.',
-   'openai', 'gpt-4o', true, :admin_id::uuid,
+   'openai', 'gpt-4o', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-005-0000-0000-000000000005"]'::jsonb, 'anthropic', NOW() - INTERVAL '32 days', NOW() - INTERVAL '32 days'),
 
   -- Additional content agents
@@ -365,56 +366,56 @@ INSERT INTO public.ai_agents (
    'Writes launch announcements and product marketing copy',
    'product_marketing',
    'You are a product marketing expert. Write compelling product launch copy, press releases, and announcement emails. Focus on benefits, not features.',
-   'openai', 'gpt-4o', true, :admin_id::uuid,
+   'openai', 'gpt-4o', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-001-0000-0000-000000000001", "kbc-004-0000-0000-000000000004"]'::jsonb, 'gemini', NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days'),
 
   ('agent-012-0000-0000-000000000012'::uuid, 'Competitor Analysis Bot',
    'Analyzes competitor strategies and positioning',
    'competitive_analysis',
    'You are a competitive intelligence analyst. Analyze competitor strategies, positioning, messaging, and gaps. Provide actionable recommendations.',
-   'gemini', 'gemini-2.0-pro', true, :admin_id::uuid,
+   'gemini', 'gemini-2.0-pro', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-003-0000-0000-000000000003"]'::jsonb, 'openai', NOW() - INTERVAL '28 days', NOW() - INTERVAL '28 days'),
 
   ('agent-013-0000-0000-000000000013'::uuid, 'Customer Testimonial Creator',
    'Develops testimonial content from customer feedback',
    'testimonial',
    'You are an expert at crafting compelling testimonials from customer feedback. Make them specific, authentic, and outcome-focused.',
-   'anthropic', 'claude-3-5-sonnet', true, :admin_id::uuid,
+   'anthropic', 'claude-3-5-sonnet', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-001-0000-0000-000000000001"]'::jsonb, 'openai', NOW() - INTERVAL '26 days', NOW() - INTERVAL '26 days'),
 
   ('agent-014-0000-0000-000000000014'::uuid, 'Thought Leadership Builder',
    'Creates thought leadership content for executive positioning',
    'thought_leadership',
    'You are a thought leadership strategist. Write authoritative content that positions executives as industry leaders. Focus on original insights and data-backed claims.',
-   'openai', 'gpt-4o', true, :admin_id::uuid,
+   'openai', 'gpt-4o', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-003-0000-0000-000000000003", "kbc-005-0000-0000-000000000005"]'::jsonb, 'gemini', NOW() - INTERVAL '24 days', NOW() - INTERVAL '24 days'),
 
   ('agent-015-0000-0000-000000000015'::uuid, 'Webinar Script Generator',
    'Creates scripts and talking points for webinars and presentations',
    'presentation',
    'You are a presentation expert. Write engaging webinar scripts and talking points. Include storytelling elements and audience engagement techniques.',
-   'gemini', 'gemini-2.0-pro', true, :admin_id::uuid,
+   'gemini', 'gemini-2.0-pro', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-001-0000-0000-000000000001", "kbc-004-0000-0000-000000000004"]'::jsonb, 'openai', NOW() - INTERVAL '22 days', NOW() - INTERVAL '22 days'),
 
   ('agent-016-0000-0000-000000000016'::uuid, 'LinkedIn Comment Suggester',
    'Suggests engaging comments and replies for LinkedIn discussions',
    'engagement',
    'You are a LinkedIn engagement expert. Suggest thoughtful, relevant comments and replies to LinkedIn posts that add value and build relationships.',
-   'anthropic', 'claude-3-5-sonnet', true, :admin_id::uuid,
+   'anthropic', 'claude-3-5-sonnet', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-004-0000-0000-000000000004"]'::jsonb, 'openai', NOW() - INTERVAL '20 days', NOW() - INTERVAL '20 days'),
 
   ('agent-017-0000-0000-000000000017'::uuid, 'Campaign Strategy Advisor',
    'Develops comprehensive marketing campaign strategies',
    'strategy',
    'You are a marketing strategist. Develop comprehensive campaign strategies including: objectives, target audience, channels, messaging, timeline, and success metrics.',
-   'openai', 'gpt-4o', true, :admin_id::uuid,
+   'openai', 'gpt-4o', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-003-0000-0000-000000000003", "kbc-004-0000-0000-000000000004"]'::jsonb, 'gemini', NOW() - INTERVAL '18 days', NOW() - INTERVAL '18 days'),
 
   ('agent-018-0000-0000-000000000018'::uuid, 'Crisis Communication Manager',
    'Prepares crisis communication responses and messaging',
    'crisis_management',
    'You are a crisis communication expert. Help prepare thoughtful, measured responses to negative situations. Focus on transparency, responsibility, and next steps.',
-   'anthropic', 'claude-3-5-sonnet', true, :admin_id::uuid,
+   'anthropic', 'claude-3-5-sonnet', true, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid,
    '["kbc-001-0000-0000-000000000001", "kbc-004-0000-0000-000000000004"]'::jsonb, 'openai', NOW() - INTERVAL '16 days', NOW() - INTERVAL '16 days')
 ON CONFLICT (id) DO NOTHING;
 
@@ -536,28 +537,28 @@ INSERT INTO public.thought_leaders (
    'https://linkedin.com/in/alexchen', 'Technical and analytical',
    'CTOs, architects, engineers',
    ARRAY['cloud-infrastructure', 'microservices', 'devops', 'kubernetes'],
-   true, 'agent-001-0000-0000-000000000001'::uuid, :brand_manager_id::uuid,
+   true, 'agent-001-0000-0000-000000000001'::uuid, 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'::uuid,
    NOW() - INTERVAL '40 days', NOW() - INTERVAL '40 days'),
 
   ('leader-002-0000-0000-000000000002'::uuid, 'Sarah Martinez', 'sarah-martinez', 'Startup Founder',
    'https://linkedin.com/in/sarahmartinez', 'Inspirational and authentic',
    'Entrepreneurs, founders, investors',
    ARRAY['startups', 'fundraising', 'product-market-fit', 'scaling'],
-   true, 'agent-002-0000-0000-000000000002'::uuid, :brand_manager_id::uuid,
+   true, 'agent-002-0000-0000-000000000002'::uuid, 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'::uuid,
    NOW() - INTERVAL '38 days', NOW() - INTERVAL '38 days'),
 
   ('leader-003-0000-0000-000000000003'::uuid, 'Maya Patel', 'maya-patel', 'Design Director',
    'https://linkedin.com/in/mayapatel', 'Creative and visual',
    'Designers, product managers, creative directors',
    ARRAY['ui-ux', 'design-systems', 'accessibility', 'user-research'],
-   true, 'agent-003-0000-0000-000000000003'::uuid, :manager_id::uuid,
+   true, 'agent-003-0000-0000-000000000003'::uuid, 'a6e7f8c9-daeb-4f2g-c3h4-e5f6a7b8c9d0'::uuid,
    NOW() - INTERVAL '36 days', NOW() - INTERVAL '36 days'),
 
   ('leader-004-0000-0000-000000000004'::uuid, 'James Wilson', 'james-wilson', 'VP Marketing',
    'https://linkedin.com/in/jameswilson', 'Strategic and data-driven',
    'Marketing leaders, CMOs, growth managers',
    ARRAY['marketing-strategy', 'analytics', 'growth-hacking', 'brand-building'],
-   true, 'agent-005-0000-0000-000000000005'::uuid, :pm_id::uuid,
+   true, 'agent-005-0000-0000-000000000005'::uuid, 'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::uuid,
    NOW() - INTERVAL '34 days', NOW() - INTERVAL '34 days')
 ON CONFLICT (slug) DO NOTHING;
 
