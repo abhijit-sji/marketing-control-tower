@@ -219,96 +219,7 @@ INSERT INTO public.project_tasks (
 ON CONFLICT (id) DO NOTHING;
 
 -- =====================================================
--- 4. EOD SUBMISSIONS (End-of-day team status)
--- =====================================================
-
-INSERT INTO public.eod_submissions (
-  id,
-  submitted_by,
-  submission_date,
-  summary,
-  highlights,
-  blockers,
-  tomorrow_focus,
-  metadata,
-  created_at
-) VALUES
-  ('eod-001-0000-0000-000000000001'::uuid, 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'::uuid, NOW()::date - INTERVAL '3 days',
-   'Good progress on content calendar and LinkedIn posts',
-   ARRAY['Completed content calendar planning for Q1', 'Started writing 20 LinkedIn posts', 'Client feedback positive'],
-   ARRAY['Waiting for client approval on messaging'],
-   ARRAY['Continue writing LinkedIn posts', 'Start SEO blog research', 'Weekly team sync'],
-   jsonb_build_object('tasks_completed', 3, 'tasks_pending', 5),
-   NOW() - INTERVAL '3 days'),
-
-  ('eod-002-0000-0000-000000000002'::uuid, 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'::uuid, NOW()::date - INTERVAL '2 days',
-   'Content creation on track. Brand refresh progressing',
-   ARRAY['Completed 5 LinkedIn posts', 'Logo design concepts approved', 'Brand guidelines 80% complete'],
-   ARRAY['Designer needs more brand direction'],
-   ARRAY['Finalize brand guidelines', 'Continue LinkedIn content', 'Client presentation prep'],
-   jsonb_build_object('tasks_completed', 4, 'tasks_pending', 4),
-   NOW() - INTERVAL '2 days'),
-
-  ('eod-003-0000-0000-000000000003'::uuid, 'f5d6e7b8-c9da-4e1f-b2g3-d4e5f6a7b8c9'::uuid, NOW()::date - INTERVAL '1 day',
-   'High productivity. All projects advancing',
-   ARRAY['Delivered 8 blog outlines', 'Recorded 2 product videos', 'Email campaign sequences designed'],
-   ARRAY['One client needs revised timeline'],
-   ARRAY['Start blog writing', 'Video editing', 'Email testing'],
-   jsonb_build_object('tasks_completed', 5, 'tasks_pending', 3),
-   NOW() - INTERVAL '1 day'),
-
-  ('eod-004-0000-0000-000000000004'::uuid, '500b4a7f-4c4a-429e-a307-0601568c8525'::uuid, NOW()::date - INTERVAL '3 days',
-   'System administration and project support',
-   ARRAY['Updated documentation', 'Fixed 2 platform bugs', 'Trained new team member'],
-   ARRAY['Need to schedule database optimization'],
-   ARRAY['Run database maintenance', 'Review AI agent performance'],
-   jsonb_build_object('tasks_completed', 3, 'tasks_pending', 2),
-   NOW() - INTERVAL '3 days')
-ON CONFLICT (id) DO NOTHING;
-
--- =====================================================
--- 5. WEEKLY CLIENT SUMMARY (Weekly status reports)
--- =====================================================
-
-INSERT INTO public.weekly_client_summary (
-  id,
-  client_id,
-  week_start_date,
-  week_end_date,
-  summary,
-  key_deliverables,
-  metrics,
-  next_week_plan,
-  created_by,
-  created_at
-) VALUES
-  ('wcs-001-0000-0000-000000000001'::uuid, 'client-001-0000-0000-000000000001'::uuid,
-   '2026-02-17'::date, '2026-02-23'::date,
-   'Excellent week for Q1 campaign. Content calendar finalized and content creation is underway. All timelines on track.',
-   ARRAY['Content calendar: 60 pieces planned', 'LinkedIn strategy: finalized', 'First 5 blog outlines: completed'],
-   jsonb_build_object(
-     'content_pieces_completed', 8,
-     'client_approval_rate', '100%',
-     'on_time_delivery', true
-   ),
-   'Continue content production. Start video production planning. Weekly client sync scheduled.',
-   'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::uuid, NOW() - INTERVAL '5 days'),
-
-  ('wcs-002-0000-0000-000000000002'::uuid, 'client-002-0000-0000-000000000002'::uuid,
-   '2026-02-17'::date, '2026-02-23'::date,
-   'Great momentum on content marketing program. Monthly deliverables on pace for completion.',
-   ARRAY['4 Blog posts: completed', '8 LinkedIn posts: completed', 'Whitepaper research: in progress'],
-   jsonb_build_object(
-     'blog_traffic', '2400 visits',
-     'linkedin_engagement_rate', '7.2%',
-     'lead_quality_score', 8.5
-   ),
-   'Finalize whitepaper. Plan March content. Review analytics and optimize top performers.',
-   'e4c5f6a7-b8c9-4d0e-a1f2-c3d4e5f6a7b8'::uuid, NOW() - INTERVAL '5 days')
-ON CONFLICT (id) DO NOTHING;
-
--- =====================================================
--- 6. TASK COMMENTS (Task activity)
+-- 4. TASK COMMENTS (Task activity)
 -- =====================================================
 
 INSERT INTO public.project_task_comments (
@@ -340,7 +251,7 @@ INSERT INTO public.project_task_comments (
 ON CONFLICT (id) DO NOTHING;
 
 -- =====================================================
--- 7. Create indexes for performance
+-- 5. Create indexes for performance
 -- =====================================================
 
 CREATE INDEX IF NOT EXISTS idx_clients_slug ON public.clients(slug);
