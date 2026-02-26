@@ -57,7 +57,7 @@ export function useStylePresets() {
     setError(null);
 
     try {
-      const { data, error: fetchError } = await supabase
+      const { data, error: fetchError } = await (supabase as any)
         .from("image_style_presets")
         .select("*")
         .eq("is_active", true)
@@ -114,7 +114,7 @@ export function useAspectRatios() {
     setError(null);
 
     try {
-      const { data, error: fetchError } = await supabase
+      const { data, error: fetchError } = await (supabase as any)
         .from("image_aspect_ratios")
         .select("*")
         .eq("is_active", true)

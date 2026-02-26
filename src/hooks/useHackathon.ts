@@ -295,7 +295,7 @@ export const useCreateTeamWithMembers = () => {
 
       // Helper to get or create participant
       const getOrCreateParticipant = async (employeeId: string): Promise<string> => {
-        const { data: existing } = await supabase
+        const { data: existing } = await (supabase as any)
           .from("hackathon_participants")
           .select("id")
           .eq("event_id", data.eventId)

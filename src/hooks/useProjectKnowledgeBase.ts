@@ -59,7 +59,7 @@ export const useProjectKnowledgeBase = (projectId?: string) => {
     queryFn: async () => {
       if (!projectId) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('project_knowledge_sources')
         .select('*')
         .eq('project_id', projectId)
@@ -67,7 +67,7 @@ export const useProjectKnowledgeBase = (projectId?: string) => {
         .order('name');
 
       if (error) throw error;
-      return data as ProjectKnowledgeSource[];
+      return (data || []) as ProjectKnowledgeSource[];
     },
     enabled: !!projectId,
   });
@@ -78,14 +78,14 @@ export const useProjectKnowledgeBase = (projectId?: string) => {
     queryFn: async () => {
       if (!projectId) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('project_knowledge_files')
         .select('*, project_knowledge_sources(*)')
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as ProjectKnowledgeFile[];
+      return (data || []) as ProjectKnowledgeFile[];
     },
     enabled: !!projectId,
     refetchInterval: (query) => {
@@ -189,20 +189,20 @@ export const useProjectKnowledgeBase = (projectId?: string) => {
       for (const fileId of fileIds) {
         try {
           // Get file info to delete from storage - use metadata.path if available
-          const { data: file } = await supabase
+          const { data: file } = await (supabase as any)
             .from('project_knowledge_files')
-            .select('file_url, metadata')
+            .select('file_name, file_path')
             .eq('id', fileId)
             .single();
 
           // Delete from storage if path exists in metadata
-          const storagePath = (file?.metadata as Record<string, unknown>)?.path as string | undefined;
+          const storagePath = file?.file_path as string | undefined;
           if (storagePath) {
             await supabase.storage.from('knowledge').remove([storagePath]);
           }
 
           // Delete file record (embeddings are deleted via cascade or don't exist yet)
-          const { error } = await supabase
+          const { error } = await (supabase as any)
             .from('project_knowledge_files')
             .delete()
             .eq('id', fileId);
@@ -257,7 +257,7 @@ export const useProjectKnowledgeBase = (projectId?: string) => {
     }) => {
       if (!projectId) throw new Error('Project ID is required');
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('project_knowledge_sources')
         .insert([{
           name,
@@ -291,7 +291,7 @@ export const useProjectKnowledgeBase = (projectId?: string) => {
   // Delete source
   const deleteSource = useMutation({
     mutationFn: async (sourceId: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('project_knowledge_sources')
         .update({ is_active: false })
         .eq('id', sourceId)

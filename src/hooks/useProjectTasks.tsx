@@ -111,7 +111,7 @@ export const useProjectTasks = (projectId?: string) => {
         throw error;
       }
 
-      return data as ProjectTask[];
+      return (data || []) as unknown as ProjectTask[];
     },
     retry: 2,
     staleTime: 30000,
@@ -137,7 +137,7 @@ export const useAllProjectTasks = () => {
         throw error;
       }
 
-      return data as ProjectTask[];
+      return (data || []) as unknown as ProjectTask[];
     },
     retry: 2,
     staleTime: 30000,
@@ -152,13 +152,9 @@ export const useBrandTasks = (brandId?: string) => {
     queryFn: async () => {
       if (!brandId) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('project_tasks')
-        .select(`
-          *,
-          brand:brand_id(id, name, slug),
-          client:client_id(id, name, company)
-        `)
+        .select('*')
         .eq('brand_id', brandId)
         .order('created_at', { ascending: false });
 
@@ -167,7 +163,7 @@ export const useBrandTasks = (brandId?: string) => {
         throw error;
       }
 
-      return data as ProjectTask[];
+      return (data || []) as unknown as ProjectTask[];
     },
     enabled: !!brandId,
     retry: 2,
@@ -234,7 +230,7 @@ export const useUpdateProjectTask = () => {
 
       // Use RPC function to bypass WITH CHECK RLS limitation
       // The RPC function performs its own permission checks against the OLD row
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .rpc('update_project_task', {
           p_task_id: id,
           p_updates: updateData,

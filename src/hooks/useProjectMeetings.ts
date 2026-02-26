@@ -33,14 +33,14 @@ export const useProjectMeetings = (projectId?: string) => {
     queryFn: async () => {
       if (!projectId) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('project_meetings')
         .select('*')
         .eq('project_id', projectId)
         .order('start_time', { ascending: false });
 
       if (error) throw error;
-      return data as ProjectMeeting[];
+      return (data || []) as ProjectMeeting[];
     },
   });
 
@@ -62,7 +62,7 @@ export const useProjectMeetings = (projectId?: string) => {
       if (!projectId) throw new Error('Project ID is required');
 
       // Check if meeting is already mapped
-      const { data: existing } = await supabase
+      const { data: existing } = await (supabase as any)
         .from('project_meetings')
         .select('id')
         .eq('project_id', projectId)
@@ -73,7 +73,7 @@ export const useProjectMeetings = (projectId?: string) => {
         throw new Error('This meeting is already mapped to this project');
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('project_meetings')
         .insert({
           project_id: projectId,
@@ -128,7 +128,7 @@ ${transcript ? `Transcript:\n${transcript}` : ''}
   // Unmap a meeting from the project
   const unmapMeeting = useMutation({
     mutationFn: async (meetingId: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('project_meetings')
         .delete()
         .eq('id', meetingId);

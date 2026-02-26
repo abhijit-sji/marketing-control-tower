@@ -39,14 +39,14 @@ export function useNewsletterSources() {
       setLoading(true);
       setError(null);
       
-      const { data, error: fetchError } = await supabase
+      const { data, error: fetchError } = await (supabase as any)
         .from('newsletter_sources')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
 
-      setSources(data || []);
+      setSources((data || []) as NewsletterSource[]);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch sources';
       setError(errorMessage);
@@ -60,11 +60,16 @@ export function useNewsletterSources() {
     }
   };
 
-  const createSource = async (data: CreateNewsletterSourceData): Promise<boolean> => {
+  const createSource = async (sourceData: CreateNewsletterSourceData): Promise<boolean> => {
     try {
-      const { error: insertError } = await supabase
+      const { error: insertError } = await (supabase as any)
         .from('newsletter_sources')
-        .insert(data);
+        .insert({
+          source_name: sourceData.name,
+          rss_url: sourceData.feed_url,
+          category: sourceData.category,
+          is_active: true,
+        });
 
       if (insertError) throw insertError;
 
@@ -85,11 +90,17 @@ export function useNewsletterSources() {
     }
   };
 
-  const updateSource = async (id: string, data: UpdateNewsletterSourceData): Promise<boolean> => {
+  const updateSource = async (id: string, updateData: UpdateNewsletterSourceData): Promise<boolean> => {
     try {
-      const { error: updateError } = await supabase
+      const mapped: any = {};
+      if (updateData.name !== undefined) mapped.source_name = updateData.name;
+      if (updateData.feed_url !== undefined) mapped.rss_url = updateData.feed_url;
+      if (updateData.category !== undefined) mapped.category = updateData.category;
+      if (updateData.is_active !== undefined) mapped.is_active = updateData.is_active;
+
+      const { error: updateError } = await (supabase as any)
         .from('newsletter_sources')
-        .update(data)
+        .update(mapped)
         .eq('id', id);
 
       if (updateError) throw updateError;
@@ -113,7 +124,7 @@ export function useNewsletterSources() {
 
   const deleteSource = async (id: string): Promise<boolean> => {
     try {
-      const { error: deleteError } = await supabase
+      const { error: deleteError } = await (supabase as any)
         .from('newsletter_sources')
         .delete()
         .eq('id', id);
@@ -180,4 +191,3 @@ export function useNewsletterSources() {
     testFeed,
   };
 }
-
