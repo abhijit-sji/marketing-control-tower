@@ -35,14 +35,14 @@ export const useLeaderAnalytics = (leaderId: string | undefined) => {
     queryFn: async () => {
       if (!leaderId) return [];
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('content_performance_metrics')
         .select('*')
         .eq('leader_id', leaderId)
         .order('posted_date', { ascending: false });
       
       if (error) throw error;
-      return data as LeaderAnalytics[];
+      return (data || []) as LeaderAnalytics[];
     },
     enabled: !!leaderId,
   });
@@ -54,7 +54,7 @@ export const useAnalyticsSummary = (leaderId: string | undefined) => {
     queryFn: async () => {
       if (!leaderId) return null;
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('content_performance_metrics')
         .select('*')
         .eq('leader_id', leaderId);
@@ -63,43 +63,41 @@ export const useAnalyticsSummary = (leaderId: string | undefined) => {
       if (!data || data.length === 0) return null;
       
       const totalPosts = data.length;
-      const avgEngagement = data.reduce((sum, m) => sum + m.engagement_score, 0) / totalPosts;
-      const avgImpressions = data.reduce((sum, m) => sum + m.impressions, 0) / totalPosts;
-      const totalReach = data.reduce((sum, m) => sum + m.reach_count, 0);
+      const avgEngagement = data.reduce((sum: number, m: any) => sum + (m.engagement_score || m.engagement_rate || 0), 0) / totalPosts;
+      const avgImpressions = data.reduce((sum: number, m: any) => sum + (m.impressions || m.views || 0), 0) / totalPosts;
+      const totalReach = data.reduce((sum: number, m: any) => sum + (m.reach_count || 0), 0);
       
-      // Find most common post type
-      const postTypes = data.reduce((acc, m) => {
-        if (!m.post_type) return acc;
-        acc[m.post_type] = (acc[m.post_type] || 0) + 1;
+      const postTypes = data.reduce((acc: Record<string, number>, m: any) => {
+        const pt = m.post_type || m.content_type;
+        if (!pt) return acc;
+        acc[pt] = (acc[pt] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
       
       const topPostType = Object.entries(postTypes)
-        .sort(([, a], [, b]) => b - a)[0]?.[0] || null;
+        .sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0] || null;
       
-      // Find most common hook style
-      const hookStyles = data.reduce((acc, m) => {
+      const hookStyles = data.reduce((acc: Record<string, number>, m: any) => {
         if (!m.hook_style) return acc;
         acc[m.hook_style] = (acc[m.hook_style] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
       
       const topHookStyle = Object.entries(hookStyles)
-        .sort(([, a], [, b]) => b - a)[0]?.[0] || null;
+        .sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0] || null;
       
-      // Group by audience
-      const byAudience = data.reduce((acc, m) => {
+      const byAudience = data.reduce((acc: any, m: any) => {
         const aud = m.audience || 'General';
         if (!acc[aud]) {
           acc[aud] = { posts: 0, totalEng: 0, totalImp: 0 };
         }
         acc[aud].posts++;
-        acc[aud].totalEng += m.engagement_score;
-        acc[aud].totalImp += m.impressions;
+        acc[aud].totalEng += (m.engagement_score || m.engagement_rate || 0);
+        acc[aud].totalImp += (m.impressions || m.views || 0);
         return acc;
       }, {} as Record<string, { posts: number; totalEng: number; totalImp: number }>);
 
-      const audienceStats = Object.entries(byAudience).reduce((acc, [aud, stats]) => {
+      const audienceStats = Object.entries(byAudience).reduce((acc: any, [aud, stats]: any) => {
         acc[aud] = {
           posts: stats.posts,
           avgEngagement: Math.round(stats.totalEng / stats.posts),

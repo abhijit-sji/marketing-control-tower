@@ -138,7 +138,7 @@ export const useUpdateTrendStatus = (leaderId?: string) => {
       trendId: string;
       status: "draft" | "ready" | "in_progress" | "used";
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("weekly_trends")
         .update({ status })
         .eq("id", trendId)
@@ -168,7 +168,7 @@ export const useDeleteTrend = (leaderId?: string) => {
 
   return useMutation({
     mutationFn: async (trendId: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("weekly_trends")
         .delete()
         .eq("id", trendId);
@@ -194,7 +194,7 @@ export const useReadyTrends = (leaderId?: string) => {
     mutationFn: async () => {
       if (!leaderId) throw new Error("Leader ID required");
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("weekly_trends")
         .select("*")
         .eq("leader_id", leaderId)

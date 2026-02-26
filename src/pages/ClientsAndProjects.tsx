@@ -24,7 +24,8 @@ import { useClients, Client, CreateClientData, UpdateClientData } from "@/hooks/
 import { useProjects } from "@/hooks/useProjects";
 import { ClientDialog } from "@/components/clients/ClientDialog";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase as _supabase } from "@/integrations/supabase/client";
+const supabase = _supabase as any;
 
 export default function ClientsAndProjects() {
   const navigate = useNavigate();

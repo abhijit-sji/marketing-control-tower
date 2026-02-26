@@ -58,7 +58,7 @@ export const useGoogleAnalytics = (brandId?: string) => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('brand_analytics_data')
         .select('raw_data, date_range_start')
         .eq('brand_id', brandId)

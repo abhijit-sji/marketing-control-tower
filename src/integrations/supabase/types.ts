@@ -3212,6 +3212,7 @@ export type Database = {
       project_tasks: {
         Row: {
           activecollab_task_id: number | null
+          actual_hours: number | null
           assigned_to: string | null
           created_at: string | null
           description: string | null
@@ -3225,6 +3226,7 @@ export type Database = {
         }
         Insert: {
           activecollab_task_id?: number | null
+          actual_hours?: number | null
           assigned_to?: string | null
           created_at?: string | null
           description?: string | null
@@ -3238,6 +3240,7 @@ export type Database = {
         }
         Update: {
           activecollab_task_id?: number | null
+          actual_hours?: number | null
           assigned_to?: string | null
           created_at?: string | null
           description?: string | null

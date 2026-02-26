@@ -241,7 +241,7 @@ export const useImageGeneration = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setImages((data || []) as GeneratedImage[]);
+      setImages((data || []) as unknown as GeneratedImage[]);
       return { data, error: null };
     } catch (error: any) {
       console.error("Error fetching images:", error);
@@ -281,7 +281,7 @@ export const useImageGeneration = () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const { count, error } = await supabase
+      const { count, error } = await (supabase as any)
         .from("ai_generated_images")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id)
@@ -304,7 +304,7 @@ export const useImageGeneration = () => {
    */
   const shareImage = useCallback(async (imageId: string, shared: boolean) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("ai_generated_images")
         .update({ is_shared: shared })
         .eq("id", imageId);

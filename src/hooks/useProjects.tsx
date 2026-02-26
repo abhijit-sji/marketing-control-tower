@@ -145,11 +145,11 @@ export function useProjects(params: UseProjectsParams = {}) {
   const createProject = async (projectData: CreateProjectData): Promise<Project> => {
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('projects')
       .insert([{
         ...projectData,
-        project_manager: projectData.project_manager || user.id
+        project_manager_id: projectData.project_manager || user.id
       }])
       .select(`
         *,
@@ -290,15 +290,14 @@ export function useProjects(params: UseProjectsParams = {}) {
   const getProjectsByClientId = async (clientId: string): Promise<Project[]> => {
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('projects')
-      .select('id, name, status, activecollab_project_id')
+      .select('id, name, status')
       .eq('client_id', clientId)
-      .not('activecollab_project_id', 'is', null)
       .order('name');
     
     if (error) throw error;
-    return data as Project[];
+    return (data || []) as unknown as Project[];
   };
 
   const updateProjectClientAssociations = async (

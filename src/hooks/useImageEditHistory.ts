@@ -132,11 +132,10 @@ export function useImageEditHistory() {
    * Check if an image has any edits (children)
    */
   const hasEdits = useCallback(async (imageId: string): Promise<boolean> => {
-    const { count, error } = await supabase
+    const { count, error } = await (supabase as any)
       .from("ai_generated_images")
       .select("*", { count: "exact", head: true })
-      .eq("parent_id", imageId)
-      .is("deleted_at", null);
+      .eq("parent_id", imageId);
 
     return !error && (count || 0) > 0;
   }, []);

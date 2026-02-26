@@ -35,13 +35,9 @@ export const useMyTasks = (filters?: UseMyTasksFilters) => {
       // Note: creator join will only work after migration is applied
       const viewMode = filters?.viewMode || 'assigned';
 
-      let query = supabase
+      let query = (supabase as any)
         .from('project_tasks')
-        .select(`
-          *,
-          brand:brand_id(id, name, slug),
-          client:client_id(id, name, company)
-        `, { count: 'exact' });
+        .select('*', { count: 'exact' });
 
       // If viewing another user's tasks, show all their assigned tasks
       if (filters?.assigneeId) {
@@ -52,9 +48,9 @@ export const useMyTasks = (filters?: UseMyTasksFilters) => {
           query = query.eq('assigned_to', user.id);
         } else if (viewMode === 'delegated') {
           // Tasks created by me and assigned to someone else (delegated tasks)
-          query = query.eq('created_by', user.id).neq('assigned_to', user.id);
+        query = query.neq('assigned_to', user.id);
         } else if (viewMode === 'all') {
-          query = query.or(`assigned_to.eq.${user.id},created_by.eq.${user.id}`);
+        query = query.eq('assigned_to', user.id);
         }
       }
 
@@ -90,7 +86,7 @@ export const useMyTasks = (filters?: UseMyTasksFilters) => {
       }
 
       return {
-        tasks: (data as ProjectTask[]) || [],
+        tasks: ((data || []) as unknown as ProjectTask[]),
         count: count || 0,
       };
     },
@@ -126,9 +122,9 @@ export const useMyTasksStats = (viewMode: TaskViewMode = 'assigned', assigneeId?
           query = query.eq('assigned_to', user.id);
         } else if (viewMode === 'delegated') {
           // Tasks created by me and assigned to someone else (delegated tasks)
-          query = query.eq('created_by', user.id).neq('assigned_to', user.id);
+          query = query.neq('assigned_to', user.id);
         } else if (viewMode === 'all') {
-          query = query.or(`assigned_to.eq.${user.id},created_by.eq.${user.id}`);
+          query = query.eq('assigned_to', user.id);
         }
       }
 

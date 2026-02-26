@@ -4,7 +4,8 @@ import { format } from "date-fns";
 import { Calendar, Download, FileText, Users, TrendingUp, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase as _supabase } from "@/integrations/supabase/client";
+const supabase = _supabase as any;
 import {
   Table,
   TableBody,

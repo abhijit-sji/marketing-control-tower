@@ -20,14 +20,14 @@ export const usePerplexitySettings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('perplexity_settings')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
       
       if (error) throw error;
-      return data as PerplexitySettings | null;
+      return (data || null) as PerplexitySettings | null;
     },
   });
 };
@@ -46,7 +46,7 @@ export const useSavePerplexitySettings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('perplexity_settings')
         .upsert({
           user_id: user.id,

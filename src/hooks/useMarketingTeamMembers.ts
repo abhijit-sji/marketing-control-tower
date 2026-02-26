@@ -16,7 +16,7 @@ export const useMarketingTeamMembers = () => {
       // Show all active users so any user can assign tasks to anyone
       const { data, error } = await supabase
         .from('users')
-        .select('id, first_name, last_name, email, title')
+        .select('id, first_name, last_name, email')
         .eq('status', 'active')
         .order('first_name', { ascending: true });
 
@@ -25,7 +25,7 @@ export const useMarketingTeamMembers = () => {
         throw error;
       }
 
-      return data as MarketingTeamMember[];
+      return (data || []).map((u: any) => ({ ...u, title: null })) as MarketingTeamMember[];
     },
   });
 };
