@@ -17,11 +17,13 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb';
-import { Loader2, ArrowLeft, RefreshCw, Calendar, MessageSquare, User, Clock, FolderOpen, Activity, ChevronRight, Target, Database, BarChart3, Trash2, MapPin, Users, Link as LinkIcon, Plus, Pencil } from 'lucide-react';
+import { Loader2, ArrowLeft, RefreshCw, Calendar, MessageSquare, User, Clock, FolderOpen, Activity, ChevronRight, Target, Database, BarChart3, Trash2, MapPin, Users, Link as LinkIcon, Plus, Pencil, Bot } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { slugify } from '@/lib/slugify';
 import { useProjects } from '@/hooks/useProjects';
+import { useAuth } from '@/hooks/useAuth';
+import { MyAgentsPanel } from '@/components/agents/MyAgentsPanel';
 import { getProjectKnowledgeUrl } from '@/lib/projectSlugUtils';
 import { useProjectTasks, ProjectTask } from '@/hooks/useProjectTasks';
 import { useProjectTaskComments } from '@/hooks/useProjectTaskComments';
@@ -34,6 +36,7 @@ import ProjectKnowledgeBase from './ProjectKnowledgeBase';
 const ImportedProjectDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [projectId, setProjectId] = useState<string | null>(null);
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -297,6 +300,13 @@ const ImportedProjectDetail = () => {
           >
             <Database className="h-4 w-4 mr-2 flex-shrink-0" />
             Knowledge Base
+          </TabsTrigger>
+          <TabsTrigger
+            value="ai-solutions"
+            className="rounded-lg px-4 py-2 h-10 flex items-center data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary font-semibold transition-all whitespace-nowrap"
+          >
+            <Bot className="h-4 w-4 mr-2 flex-shrink-0" />
+            AI Solutions
           </TabsTrigger>
         </TabsList>
 
@@ -722,6 +732,16 @@ const ImportedProjectDetail = () => {
           <TabsContent value="knowledge" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-300">
             {projectId && (
               <ProjectKnowledgeBase projectId={projectId} embedded />
+            )}
+          </TabsContent>
+
+          {/* AI Solutions Tab */}
+          <TabsContent value="ai-solutions" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-300">
+            {user && (
+              <MyAgentsPanel
+                userId={user.id}
+                showHeader={true}
+              />
             )}
           </TabsContent>
         </div>
