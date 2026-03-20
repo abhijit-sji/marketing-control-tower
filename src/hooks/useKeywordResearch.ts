@@ -36,12 +36,10 @@ export function useKeywordSuggestions() {
       brandId,
       seedKeyword,
       count = 10,
-      model,
     }: {
       brandId: string;
       seedKeyword: string;
       count?: number;
-      model?: string;
     }): Promise<KeywordSuggestion[]> => {
       const { data, error } = await supabase.functions.invoke('keyword-research-api', {
         body: {
@@ -49,7 +47,6 @@ export function useKeywordSuggestions() {
           brand_id: brandId,
           seed_keyword: seedKeyword,
           count,
-          model,
         },
       });
 

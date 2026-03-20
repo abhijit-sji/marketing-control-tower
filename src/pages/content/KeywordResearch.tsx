@@ -25,17 +25,6 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const MODEL_OPTIONS = [
-  { value: 'gpt-4o', label: 'GPT-4o', provider: 'openai' },
-  { value: 'gpt-4o-mini', label: 'GPT-4o Mini', provider: 'openai' },
-  { value: 'gpt-4.1-2025-04-14', label: 'GPT-4.1', provider: 'openai' },
-  { value: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', provider: 'claude' },
-  { value: 'claude-3-7-sonnet-20250219', label: 'Claude 3.7 Sonnet', provider: 'claude' },
-  { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', provider: 'claude' },
-  { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'gemini' },
-  { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'gemini' },
-];
-
 interface KeywordResearchProps {
   brandId?: string;
   brandName?: string;
@@ -46,7 +35,6 @@ export default function KeywordResearch({ brandId, brandName }: KeywordResearchP
   const { toast } = useToast();
 
   const [selectedBrandId, setSelectedBrandId] = useState(brandId || '');
-  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
   const [seedKeyword, setSeedKeyword] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
@@ -69,7 +57,6 @@ export default function KeywordResearch({ brandId, brandName }: KeywordResearchP
       const results = await suggestMutation.mutateAsync({
         brandId: selectedBrandId,
         seedKeyword,
-        model: selectedModel,
       });
       setSuggestions(results);
       setShowSuggestionsDialog(true);
@@ -154,27 +141,8 @@ export default function KeywordResearch({ brandId, brandName }: KeywordResearchP
         </Card>
       )}
 
-      {/* AI Model Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Model</CardTitle>
-          <CardDescription>Choose which AI model to use for keyword suggestions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select value={selectedModel} onValueChange={setSelectedModel}>
-            <SelectTrigger className="w-full md:w-[300px]">
-              <SelectValue placeholder="Select model..." />
-            </SelectTrigger>
-            <SelectContent>
-              {MODEL_OPTIONS.map((model) => (
-                <SelectItem key={model.value} value={model.value}>
-                  {model.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+
+
 
       {/* Brand Selection & Keyword Suggestions */}
       <Card>
