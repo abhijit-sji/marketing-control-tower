@@ -80,28 +80,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check if user has admin permissions using user_roles table
-    const { data: userRoles, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.user.id);
-
-    if (roleError || !userRoles || userRoles.length === 0) {
-      console.error('Role verification error:', roleError);
-      return new Response(JSON.stringify({ error: 'Unable to verify permissions' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const roles = userRoles.map(r => r.role);
-    if (!roles.some(role => ['super_admin', 'manager'].includes(role))) {
-      return new Response(JSON.stringify({ error: 'Insufficient permissions' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     const method = req.method;
     const url = new URL(req.url);
     const brandId = url.searchParams.get('id');
