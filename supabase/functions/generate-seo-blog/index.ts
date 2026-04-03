@@ -105,7 +105,7 @@ serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "gpt-4o-mini",
+            model: "openai/gpt-5-mini",
             messages,
             temperature: 0.3,
             max_tokens: 4000,
@@ -122,7 +122,7 @@ serve(async (req) => {
           content: data.choices[0].message.content,
           usage: data.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
           cost_usd: 0,
-          model: "gpt-4o-mini",
+          model: "openai/gpt-5-mini",
         };
       },
     };
