@@ -28,8 +28,6 @@ const corsHeaders = {
 interface RequestBody {
   primary_keyword: string
   primary_reference: string
-  secondary_keyword?: string
-  third_keyword?: string
   additional_notes?: string
   brand_name: string
   brand_id: string
@@ -110,10 +108,9 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-4o-mini',
+            model: 'openai/gpt-5-mini',
             messages,
-            temperature: 0.3,
-            max_tokens: 4000,
+            max_completion_tokens: 4000,
           }),
         })
 
@@ -127,7 +124,7 @@ serve(async (req) => {
           content: data.choices[0].message.content,
           usage: data.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
           cost_usd: 0,
-          model: 'gpt-4o-mini',
+          model: 'openai/gpt-5-mini',
         }
       },
     }
@@ -146,8 +143,6 @@ serve(async (req) => {
         brand_id: body.brand_id,
         primary_keyword: body.primary_keyword,
         primary_reference: body.primary_reference,
-        secondary_keyword: body.secondary_keyword,
-        third_keyword: body.third_keyword,
         additional_notes: body.additional_notes,
         brand_name: body.brand_name,
         tone: body.tone || 'informative',
