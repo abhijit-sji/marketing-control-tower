@@ -14,15 +14,17 @@ serve(async (req) => {
 
   try {
     const { action, apiKey } = await req.json();
-    const OPENAI_API_KEY = typeof apiKey === "string" && apiKey.trim().length > 0 ? apiKey.trim() : "";
+    const OPENAI_API_KEY = typeof apiKey === 'string' && apiKey.trim().length > 0
+      ? apiKey.trim()
+      : '';
 
     if (!OPENAI_API_KEY) {
-      console.error("No OpenAI key provided in request payload");
+      console.error('No OpenAI key provided in request payload');
       return new Response(
         JSON.stringify({
           ok: false,
-          error: "OpenAI API key is missing. Add it in Configure dialog.",
-          configured: false,
+          error: 'OpenAI API key is missing. Add it in Configure dialog.',
+          configured: false
         }),
         {
           status: 400,
@@ -31,10 +33,7 @@ serve(async (req) => {
       );
     }
 
-    console.log("OpenAI test action:", action);
-
-    if (action === "test") {
-      console.log("Testing OpenAI connection...");
+    console.log('OpenAI test action:', action);
 
       // Test the OpenAI API with a simple request
       const response = await fetch("https://api.openai.com/v1/models", {
@@ -103,7 +102,7 @@ serve(async (req) => {
         JSON.stringify({
           ok: true,
           configured: OPENAI_API_KEY.length > 0,
-          enabled: OPENAI_API_KEY.length > 0,
+          enabled: OPENAI_API_KEY.length > 0
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

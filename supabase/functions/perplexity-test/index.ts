@@ -13,52 +13,14 @@ serve(async (req) => {
   }
 
   try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    const authHeader = req.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token || "");
+    const authHeader = req.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token || '');
 
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const {
-      action,
-      apiKey,
-      prompt,
-      model,
-      temperature,
-      max_tokens,
-      topic,
-      leader_id,
-      url,
-      save_to_trends,
-      save_to_uploads,
-    } = await req.json();
-    const PERPLEXITY_API_KEY = typeof apiKey === "string" && apiKey.trim().length > 0 ? apiKey.trim() : "";
-
-    if (action === "status") {
-      return new Response(
-        JSON.stringify({
-          ok: true,
-          configured: PERPLEXITY_API_KEY.length > 0,
-          enabled: PERPLEXITY_API_KEY.length > 0,
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
-    }
-
-    if (!PERPLEXITY_API_KEY) {
       return new Response(
         JSON.stringify({
           ok: false,
@@ -72,7 +34,39 @@ serve(async (req) => {
       );
     }
 
-    console.log("Perplexity action:", action, "user:", user.email);
+    const { action, apiKey, prompt, model, temperature, max_tokens, topic, leader_id, url, save_to_trends, save_to_uploads } = await req.json();
+    const PERPLEXITY_API_KEY = typeof apiKey === 'string' && apiKey.trim().length > 0
+      ? apiKey.trim()
+      : '';
+
+    if (action === 'status') {
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          configured: PERPLEXITY_API_KEY.length > 0,
+          enabled: PERPLEXITY_API_KEY.length > 0
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    if (!PERPLEXITY_API_KEY) {
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error: 'Perplexity API key is missing. Add it in Configure dialog.',
+          configured: false
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    console.log('Perplexity action:', action, 'user:', user.email);
 
     // ============= RESEARCH ACTION =============
     // Research a topic using Perplexity and optionally save to weekly_trends
@@ -474,11 +468,11 @@ Return your response in this exact JSON format:
           response: responseContent,
           model_used: testModel,
           execution_time_ms: executionTime,
-          usage: data.usage,
+          usage: data.usage
         }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       );
     }
 
