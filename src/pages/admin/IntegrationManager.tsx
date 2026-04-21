@@ -192,6 +192,47 @@ const IntegrationManager = () => {
     loadIntegrations();
   }, []);
 
+  const getLatestOrganizationIntegrationConfig = async (integrationType: string): Promise<Record<string, any> | null> => {
+    const { data, error } = await supabase
+      .from("organization_integrations")
+      .select("config, created_at")
+      .eq("integration_type", integrationType)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    return (data?.config as Record<string, any> | undefined) ?? null;
+  };
+
+  const upsertOrganizationIntegrationConfig = async (integrationType: string, config: Record<string, any>) => {
+    const { data: existing, error: existingError } = await supabase
+      .from("organization_integrations")
+      .select("id, created_at")
+      .eq("integration_type", integrationType)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingError) throw existingError;
+
+    if (existing?.id) {
+      const { error: updateError } = await supabase
+        .from("organization_integrations")
+        .update({ config, is_active: true })
+        .eq("id", existing.id);
+      if (updateError) throw updateError;
+      return;
+    }
+
+    const { error: insertError } = await supabase.from("organization_integrations").insert({
+      integration_type: integrationType,
+      config,
+      is_active: true,
+    });
+    if (insertError) throw insertError;
+  };
+
   const loadIntegrations = async () => {
     setIsLoadingBrands(true);
     setCopySuccess(null);
@@ -478,52 +519,32 @@ const IntegrationManager = () => {
     let savedAnthropicApiKey = "";
     let savedGeminiApiKey = "";
     try {
-      const { data: openaiConfigData } = await supabase
-        .from("organization_integrations")
-        .select("config")
-        .eq("integration_type", "openai")
-        .single();
-      if (openaiConfigData?.config) {
-        const config = openaiConfigData.config as Record<string, any>;
+      const config = await getLatestOrganizationIntegrationConfig("openai");
+      if (config) {
         savedOpenAIApiKey = (config.api_key ?? config.apiKey ?? "").toString().trim();
       }
     } catch (error) {
       console.warn("Unable to load saved OpenAI key for status check", error);
     }
     try {
-      const { data: perplexityConfigData } = await supabase
-        .from("organization_integrations")
-        .select("config")
-        .eq("integration_type", "perplexity")
-        .single();
-      if (perplexityConfigData?.config) {
-        const config = perplexityConfigData.config as Record<string, any>;
+      const config = await getLatestOrganizationIntegrationConfig("perplexity");
+      if (config) {
         savedPerplexityApiKey = (config.api_key ?? config.apiKey ?? "").toString().trim();
       }
     } catch (error) {
       console.warn("Unable to load saved Perplexity key for status check", error);
     }
     try {
-      const { data: anthropicConfigData } = await supabase
-        .from("organization_integrations")
-        .select("config")
-        .eq("integration_type", "anthropic")
-        .single();
-      if (anthropicConfigData?.config) {
-        const config = anthropicConfigData.config as Record<string, any>;
+      const config = await getLatestOrganizationIntegrationConfig("anthropic");
+      if (config) {
         savedAnthropicApiKey = (config.api_key ?? config.apiKey ?? "").toString().trim();
       }
     } catch (error) {
       console.warn("Unable to load saved Anthropic key for status check", error);
     }
     try {
-      const { data: geminiConfigData } = await supabase
-        .from("organization_integrations")
-        .select("config")
-        .eq("integration_type", "google_gemini")
-        .single();
-      if (geminiConfigData?.config) {
-        const config = geminiConfigData.config as Record<string, any>;
+      const config = await getLatestOrganizationIntegrationConfig("google_gemini");
+      if (config) {
         savedGeminiApiKey = (config.api_key ?? config.apiKey ?? "").toString().trim();
       }
     } catch (error) {
@@ -1109,14 +1130,8 @@ const IntegrationManager = () => {
 
         let resolvedApiKey = configData.apiKey?.trim() || "";
         if (!resolvedApiKey) {
-          const { data: savedOpenAIConfig } = await supabase
-            .from("organization_integrations")
-            .select("config")
-            .eq("integration_type", "openai")
-            .single();
-
-          if (savedOpenAIConfig?.config) {
-            const savedConfig = savedOpenAIConfig.config as Record<string, any>;
+          const savedConfig = await getLatestOrganizationIntegrationConfig("openai");
+          if (savedConfig) {
             resolvedApiKey = (savedConfig.api_key ?? savedConfig.apiKey ?? "").toString().trim();
           }
         }
@@ -1173,14 +1188,8 @@ const IntegrationManager = () => {
 
         let resolvedApiKey = configData.apiKey?.trim() || "";
         if (!resolvedApiKey) {
-          const { data: savedPerplexityConfig } = await supabase
-            .from("organization_integrations")
-            .select("config")
-            .eq("integration_type", "perplexity")
-            .single();
-
-          if (savedPerplexityConfig?.config) {
-            const savedConfig = savedPerplexityConfig.config as Record<string, any>;
+          const savedConfig = await getLatestOrganizationIntegrationConfig("perplexity");
+          if (savedConfig) {
             resolvedApiKey = (savedConfig.api_key ?? savedConfig.apiKey ?? "").toString().trim();
           }
         }
@@ -1216,14 +1225,8 @@ const IntegrationManager = () => {
 
         let resolvedApiKey = configData.apiKey?.trim() || "";
         if (!resolvedApiKey) {
-          const { data: savedAnthropicConfig } = await supabase
-            .from("organization_integrations")
-            .select("config")
-            .eq("integration_type", "anthropic")
-            .single();
-
-          if (savedAnthropicConfig?.config) {
-            const savedConfig = savedAnthropicConfig.config as Record<string, any>;
+          const savedConfig = await getLatestOrganizationIntegrationConfig("anthropic");
+          if (savedConfig) {
             resolvedApiKey = (savedConfig.api_key ?? savedConfig.apiKey ?? "").toString().trim();
           }
         }
@@ -1259,14 +1262,8 @@ const IntegrationManager = () => {
 
         let resolvedApiKey = configData.apiKey?.trim() || "";
         if (!resolvedApiKey) {
-          const { data: savedGeminiConfig } = await supabase
-            .from("organization_integrations")
-            .select("config")
-            .eq("integration_type", "google_gemini")
-            .single();
-
-          if (savedGeminiConfig?.config) {
-            const savedConfig = savedGeminiConfig.config as Record<string, any>;
+          const savedConfig = await getLatestOrganizationIntegrationConfig("google_gemini");
+          if (savedConfig) {
             resolvedApiKey = (savedConfig.api_key ?? savedConfig.apiKey ?? "").toString().trim();
           }
         }
@@ -1501,12 +1498,6 @@ const IntegrationManager = () => {
       }
 
       try {
-        const { data: existingData } = await supabase
-          .from("organization_integrations")
-          .select("*")
-          .eq("integration_type", "google_drive")
-          .single();
-
         const configPayload = {
           clientId: configData.clientId.trim(),
           clientSecret: configData.clientSecret.trim(),
@@ -1514,25 +1505,7 @@ const IntegrationManager = () => {
           folderId: configData.folderId?.trim() || "",
         };
 
-        if (existingData) {
-          const { error } = await supabase
-            .from("organization_integrations")
-            .update({
-              config: configPayload,
-              is_active: true,
-            })
-            .eq("integration_type", "google_drive");
-
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.from("organization_integrations").insert({
-            integration_type: "google_drive",
-            config: configPayload,
-            is_active: true,
-          });
-
-          if (error) throw error;
-        }
+        await upsertOrganizationIntegrationConfig("google_drive", configPayload);
 
         toast({ title: "Google Drive settings saved", description: "Google Drive credentials stored successfully." });
         setIsConfigDialogOpen(false);
@@ -1681,26 +1654,7 @@ const IntegrationManager = () => {
       if (configData.locationId?.trim()) configPayload.location_id = configData.locationId.trim();
 
       try {
-        const { data: existingData } = await supabase
-          .from("organization_integrations")
-          .select("*")
-          .eq("integration_type", integration.type)
-          .single();
-
-        if (existingData) {
-          const { error } = await supabase
-            .from("organization_integrations")
-            .update({ config: configPayload, is_active: true })
-            .eq("integration_type", integration.type);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.from("organization_integrations").insert({
-            integration_type: integration.type,
-            config: configPayload,
-            is_active: true,
-          });
-          if (error) throw error;
-        }
+        await upsertOrganizationIntegrationConfig(integration.type, configPayload);
 
         toast({ title: "Settings Saved", description: `${integration.name} credentials stored successfully.` });
         setIsConfigDialogOpen(false);
@@ -1844,14 +1798,9 @@ const IntegrationManager = () => {
 
       try {
         const integrationType = integration.id === "google-drive" ? "google_drive" : integration.type;
-        const { data, error } = await supabase
-          .from("organization_integrations")
-          .select("config")
-          .eq("integration_type", integrationType)
-          .single();
+        const config = await getLatestOrganizationIntegrationConfig(integrationType);
 
-        if (!error && data?.config) {
-          const config = data.config as Record<string, any>;
+        if (config) {
           setConfigData((prev) => ({
             ...prev,
             apiKey: config.api_key ?? config.apiKey ?? "",
