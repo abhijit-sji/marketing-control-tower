@@ -1717,19 +1717,17 @@ Please provide your analysis in the following JSON structure:
         agent_id,
         executed_by: userId,
         execution_context,
-        ai_summary: aiSummaryWithMeta,
+        ai_summary: typeof aiSummaryWithMeta === 'string'
+          ? aiSummaryWithMeta
+          : JSON.stringify(aiSummaryWithMeta),
+        output: aiSummaryWithMeta,
         generated_tasks: parsedResponse.action_items || [],
         status: 'completed',
         title: `${agent.name} - ${brandName || brandData?.name || new Date().toISOString().split('T')[0]}`,
         category: agent.category,
-        business_context: brandId ? `Brand: ${brandName || brandData?.name}` : null,
+        brand_id: brandId || null,
         cost_usd: agentCostUsd,
         total_tokens: providerMeta.total_tokens,
-        prompt_tokens: providerMeta.prompt_tokens,
-        completion_tokens: providerMeta.completion_tokens,
-        model_provider: providerMeta.provider,
-        model_version: providerMeta.api_model,
-        execution_time_ms: providerMeta.response_time_ms,
       })
       .select()
       .single();
