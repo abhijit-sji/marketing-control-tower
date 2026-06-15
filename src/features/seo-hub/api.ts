@@ -62,7 +62,7 @@ async function fetchLatestAuditScore(brandId?: string): Promise<{ score: number 
     return ctx?.brand_id === brandId;
   }) ?? data[0];
 
-  const summary = run.ai_summary as Record<string, unknown> | null;
+  const summary = (typeof run.ai_summary === 'object' ? run.ai_summary : null) as Record<string, unknown> | null;
   let score: number | null = null;
   if (summary) {
     if (typeof summary.score === 'number') score = summary.score;
