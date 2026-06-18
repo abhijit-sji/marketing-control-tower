@@ -24,6 +24,7 @@ import PMTaskDashboard from "./pages/tasks/PMTaskDashboard";
 import EODSubmission from "./pages/EODSubmission";
 import MyEODSubmissions from "./pages/MyEODSubmissions";
 import AIWorkspace from "./pages/AIWorkspace";
+import VoiceAIPage from "./pages/voice-ai/VoiceAIPage";
 import TeamManagement from "./pages/admin/TeamManagement";
 import ClientsAndProjects from "./pages/ClientsAndProjects";
 import ClientDetail from "./pages/ClientDetail";
@@ -164,6 +165,7 @@ const App = () => (
               <Route path="my-profile" element={<UserProfile />} />
               <Route path="workspace" element={<AIWorkspace />} />
               <Route path="image-ai" element={<ImageAI />} />
+              <Route path="voice-ai" element={<VoiceAIPage />} />
               <Route path="reports" element={<Reports />} />
               <Route path="seo-hub" element={
                 <ProtectedRoute requiredMinimumRole="pm">

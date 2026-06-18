@@ -15,6 +15,7 @@ import {
   History,
   Calendar,
   ImageIcon,
+  Mic,
   MessageSquare,
   MessageSquareQuote,
   Bug,
@@ -97,7 +98,8 @@ const Layout = () => {
       { name: "SEPARATOR", href: "", icon: null, current: false, isHeader: true },
       { name: "AI TOOLS", href: "", icon: null, current: false, isHeader: true },
       { name: "Video AI", href: "/workspace", icon: Video, current: false },
-      { name: "Image AI", href: "/image-ai", icon: ImageIcon, current: false }
+      { name: "Image AI", href: "/image-ai", icon: ImageIcon, current: false },
+      { name: "Voice AI", href: "/voice-ai", icon: Mic, current: false }
     );
 
     // Add Post Generation for PM and above
