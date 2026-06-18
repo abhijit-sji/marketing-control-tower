@@ -23,8 +23,10 @@ export type GenerationEngine =
 
 // VoiceBox uses these statuses; 'loading_model' appears while the model warms up
 export type GenerationStatus =
+  | 'queued'
   | 'processing'
   | 'loading_model'
+  | 'generating'
   | 'completed'
   | 'failed'
   | 'cancelled'

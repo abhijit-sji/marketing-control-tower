@@ -136,6 +136,8 @@ const IN_PROGRESS_STATUSES = new Set([
   'queued',
 ]);
 
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled', 'canceled']);
+
 /** Polls a generation's status until it reaches a terminal state. */
 export const useGenerationStatus = (id: string | null, enabled = true) =>
   useQuery({
@@ -144,10 +146,18 @@ export const useGenerationStatus = (id: string | null, enabled = true) =>
     enabled: enabled && !!id,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
+      // Unknown / in-progress → keep polling every 2s
       if (!status || IN_PROGRESS_STATUSES.has(status)) return 2000;
+      // Terminal → stop all polling
       return false;
     },
-    staleTime: 0,
+    // Once terminal, never mark stale or re-fetch on focus/mount
+    staleTime: (query) => {
+      const status = query.state.data?.status;
+      return status && TERMINAL_STATUSES.has(status) ? Infinity : 0;
+    },
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
 // ─── History hooks ────────────────────────────────────────────────────────────

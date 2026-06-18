@@ -70,11 +70,12 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
   // Poll the active generation until it completes
   const { data: statusData } = useGenerationStatus(currentGenId, currentGenId !== null);
 
-  // When polling shows completion, refresh the history feed
+  // When generation reaches a terminal state, refresh history and stop polling
   useEffect(() => {
-    if (statusData?.status === 'completed' || statusData?.status === 'failed') {
+    const s = statusData?.status;
+    if (s === 'completed' || s === 'failed' || s === 'cancelled' || s === 'canceled') {
       refetchHistory();
-      setCurrentGenId(null);
+      setCurrentGenId(null);  // clears enabled=false on the polling hook
     }
   }, [statusData?.status, refetchHistory]);
 

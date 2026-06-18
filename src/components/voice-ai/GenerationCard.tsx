@@ -16,8 +16,10 @@ interface GenerationCardProps {
 
 const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   completed: 'secondary',
+  queued: 'outline',
   processing: 'outline',
   loading_model: 'outline',
+  generating: 'outline',
   failed: 'destructive',
   cancelled: 'outline',
   canceled: 'outline',

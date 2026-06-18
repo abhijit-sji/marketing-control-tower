@@ -15,6 +15,8 @@ import {
   Loader2,
   AlertCircle,
   Play,
+  Pause,
+  Square,
   Check,
 } from 'lucide-react';
 
@@ -74,8 +76,6 @@ import {
 import { getAudioUrl, getStoryExportUrl } from '@/Api/voiceboxApi';
 import type { StoryResponse, StoryItemDetail } from '@/features/voicebox/types';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 // ─── Utility ──────────────────────────────────────────────────────────────────
 
 function fmtDuration(s: number | null | undefined): string {
@@ -83,6 +83,82 @@ function fmtDuration(s: number | null | undefined): string {
   const m = Math.floor(s / 60);
   const sec = (s % 60).toFixed(1);
   return m > 0 ? `${m}:${String(sec).padStart(4, '0')}` : `${sec}s`;
+}
+
+// ─── Story player button ──────────────────────────────────────────────────────
+// Fetches the merged export audio on demand and plays it in-page.
+
+function StoryPlayButton({ storyId, disabled }: { storyId: string; disabled?: boolean }) {
+  const [status, setStatus] = useState<'idle' | 'loading' | 'playing' | 'paused'>('idle');
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const urlRef = useRef<string>('');
+
+  const stop = () => {
+    audioRef.current?.pause();
+    if (audioRef.current) audioRef.current.currentTime = 0;
+    if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+    audioRef.current = null;
+    urlRef.current = '';
+    setStatus('idle');
+  };
+
+  useEffect(() => () => stop(), []);
+
+  const handlePlay = async () => {
+    if (status === 'playing') {
+      audioRef.current?.pause();
+      setStatus('paused');
+      return;
+    }
+    if (status === 'paused' && audioRef.current) {
+      audioRef.current.play();
+      setStatus('playing');
+      return;
+    }
+
+    // Fetch the export audio
+    setStatus('loading');
+    try {
+      const res = await fetch(getStoryExportUrl(storyId));
+      if (!res.ok) throw new Error(`Export failed: ${res.status}`);
+      const blob = await res.blob();
+      urlRef.current = URL.createObjectURL(blob);
+      const audio = new Audio(urlRef.current);
+      audioRef.current = audio;
+      audio.onended = () => setStatus('idle');
+      audio.onpause = () => {};
+      await audio.play();
+      setStatus('playing');
+    } catch {
+      setStatus('idle');
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <Button
+        size="sm"
+        variant={status === 'playing' ? 'default' : 'outline'}
+        className="h-7 gap-1 text-xs"
+        onClick={handlePlay}
+        disabled={disabled || status === 'loading'}
+      >
+        {status === 'loading' ? (
+          <Loader2 className="h-3 w-3 animate-spin" />
+        ) : status === 'playing' ? (
+          <Pause className="h-3 w-3" />
+        ) : (
+          <Play className="h-3 w-3" />
+        )}
+        {status === 'loading' ? 'Exporting…' : status === 'playing' ? 'Pause' : 'Play Story'}
+      </Button>
+      {(status === 'playing' || status === 'paused') && (
+        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={stop} title="Stop">
+          <Square className="h-3 w-3" />
+        </Button>
+      )}
+    </div>
+  );
 }
 
 // ─── Volume popover ───────────────────────────────────────────────────────────
@@ -308,8 +384,11 @@ function NarrationComposer({
   }, [isCompleted, pendingGenId]);
 
   useEffect(() => {
-    if (isFailed) setPendingGenId(null);
-  }, [isFailed]);
+    const s = statusData?.status;
+    if (s === 'failed' || s === 'cancelled' || s === 'canceled') {
+      setPendingGenId(null);
+    }
+  }, [statusData?.status]);
 
   const handleGenerate = async () => {
     if (!profileId || !text.trim()) return;
@@ -623,6 +702,9 @@ export function StoryStudioTab() {
                 )}
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
+                {items.length > 0 && (
+                  <StoryPlayButton storyId={selectedStoryId!} />
+                )}
                 <Button
                   size="sm"
                   variant="ghost"
