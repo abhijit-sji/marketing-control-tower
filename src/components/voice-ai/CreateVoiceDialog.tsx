@@ -181,7 +181,7 @@ export function CreateVoiceDialog({ open, onOpenChange }: CreateVoiceDialogProps
 
             {cloneFile && (
               <div className="space-y-2">
-                <Label htmlFor="reference-text">Reference text (optional)</Label>
+                <Label htmlFor="reference-text">Reference text</Label>
                 <Input
                   id="reference-text"
                   value={referenceText}
@@ -192,7 +192,7 @@ export function CreateVoiceDialog({ open, onOpenChange }: CreateVoiceDialogProps
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="personality">Personality (optional)</Label>
+              <Label htmlFor="personality">Personality</Label>
               <Textarea
                 id="personality"
                 value={personality}

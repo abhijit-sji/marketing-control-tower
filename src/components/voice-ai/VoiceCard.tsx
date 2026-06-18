@@ -238,7 +238,7 @@ export function VoiceCard({ profile, onSelect, selected }: VoiceCardProps) {
               <p className="text-xs text-muted-foreground">Max {MAX_SAMPLE_SIZE_MB}MB. WAV, MP3, OGG, FLAC, AAC or M4A.</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="reference-text">Reference text (optional)</Label>
+              <Label htmlFor="reference-text">Reference text</Label>
               <Input
                 id="reference-text"
                 value={referenceText}
@@ -246,7 +246,7 @@ export function VoiceCard({ profile, onSelect, selected }: VoiceCardProps) {
                 placeholder="Enter the text spoken in the audio..."
               />
               <p className="text-xs text-muted-foreground">
-                Providing the transcript improves clone quality.
+                The transcript of the audio. Improves clone quality.
               </p>
             </div>
           </div>

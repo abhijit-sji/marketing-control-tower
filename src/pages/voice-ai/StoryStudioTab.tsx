@@ -10,6 +10,9 @@ import {
   AlertCircle,
   ChevronRight,
 } from 'lucide-react';
+
+// Sentinel for the "auto" engine option — Radix Select forbids empty-string values
+const ENGINE_AUTO = '__auto__';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -411,7 +414,7 @@ interface AddNarrationDialogProps {
 function AddNarrationDialog({ storyId, open, onOpenChange }: AddNarrationDialogProps) {
   const [text, setText] = useState('');
   const [profileId, setProfileId] = useState('');
-  const [engine, setEngine] = useState('');
+  const [engine, setEngine] = useState(ENGINE_AUTO);
   const [pendingGenId, setPendingGenId] = useState<string | null>(null);
 
   const { data: profiles = [] } = useVoiceProfiles();
@@ -420,7 +423,10 @@ function AddNarrationDialog({ storyId, open, onOpenChange }: AddNarrationDialogP
 
   const { data: statusData } = useGenerationStatus(pendingGenId, !!pendingGenId);
 
-  const isProcessing = generate.isPending || statusData?.status === 'processing';
+  const isProcessing =
+    generate.isPending ||
+    statusData?.status === 'processing' ||
+    statusData?.status === 'loading_model';
   const isCompleted = statusData?.status === 'completed' && !!pendingGenId;
   const audioUrl = isCompleted && pendingGenId ? getAudioUrl(pendingGenId) : null;
 
@@ -430,9 +436,10 @@ function AddNarrationDialog({ storyId, open, onOpenChange }: AddNarrationDialogP
     const result = await generate.mutateAsync({
       profile_id: profileId,
       text: text.trim(),
-      engine: engine || undefined,
+      engine: engine === ENGINE_AUTO ? undefined : (engine as any),
     });
-    if (result.id) setPendingGenId(result.id);
+    // Set directly — no useEffect delay
+    if (result?.id) setPendingGenId(result.id);
   };
 
   const handleAddToStory = async () => {
@@ -502,10 +509,10 @@ function AddNarrationDialog({ storyId, open, onOpenChange }: AddNarrationDialogP
             <Label htmlFor="narration-engine">Engine (optional)</Label>
             <Select value={engine} onValueChange={setEngine}>
               <SelectTrigger id="narration-engine">
-                <SelectValue placeholder="Auto" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Auto (profile default)</SelectItem>
+                <SelectItem value={ENGINE_AUTO}>Auto (profile default)</SelectItem>
                 {SUPPORTED_ENGINES.map((e) => (
                   <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
                 ))}

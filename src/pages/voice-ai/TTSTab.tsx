@@ -32,6 +32,9 @@ import {
 } from '@/features/voicebox/types';
 import { getAudioUrl } from '@/Api/voiceboxApi';
 
+// Sentinel for the "auto" engine option — Radix Select forbids empty-string values
+const ENGINE_AUTO = '__auto__';
+
 interface TTSTabProps {
   initialText?: string;
   initialProfileId?: string;
@@ -41,7 +44,7 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
   const [text, setText] = useState(initialText);
   const [profileId, setProfileId] = useState(initialProfileId ?? '');
   const [language, setLanguage] = useState('en');
-  const [engine, setEngine] = useState('');
+  const [engine, setEngine] = useState(ENGINE_AUTO);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [createVoiceOpen, setCreateVoiceOpen] = useState(false);
@@ -49,49 +52,46 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
   const { data: profiles = [], isLoading: profilesLoading } = useVoiceProfiles();
   const generate = useGenerateSpeech();
 
-  // Poll the generation status until it completes
-  const isPolling = generate.data?.status === 'processing' ||
-    (generationId !== null && generate.data == null);
+  // Poll status until the generation completes or fails
+  const { data: statusData } = useGenerationStatus(generationId, generationId !== null);
 
-  const { data: statusData } = useGenerationStatus(
-    generationId,
-    generationId !== null,
-  );
-
-  // Keep active generation ID in sync
-  useEffect(() => {
-    if (generate.data?.id) {
-      setGenerationId(generate.data.id);
-    }
-  }, [generate.data?.id]);
-
-  // Auto-select first profile
+  // Auto-select first available profile
   useEffect(() => {
     if (!profileId && profiles.length > 0) {
       setProfileId(profiles[0].id);
     }
   }, [profiles, profileId]);
 
-  // Update text when initialText changes externally (e.g. "Reuse text")
+  // Pre-fill text when "Reuse text" is clicked in History tab
   useEffect(() => {
     if (initialText) setText(initialText);
   }, [initialText]);
 
+  // Derive current state from latest status poll or mutation result
   const currentGeneration = statusData ?? generate.data ?? null;
   const isCompleted = currentGeneration?.status === 'completed';
   const isFailed = currentGeneration?.status === 'failed';
-  const isProcessing = currentGeneration?.status === 'processing';
+  // loading_model is VoiceBox's "model is warming up" transitional state
+  const isProcessing =
+    generate.isPending ||
+    currentGeneration?.status === 'processing' ||
+    currentGeneration?.status === 'loading_model';
+
   const audioUrl = isCompleted && currentGeneration ? getAudioUrl(currentGeneration.id) : null;
 
   const handleGenerate = async () => {
     if (!profileId || !text.trim()) return;
+    // Reset previous result before new generation
     setGenerationId(null);
-    await generate.mutateAsync({
+    const result = await generate.mutateAsync({
       profile_id: profileId,
       text: text.trim(),
       language,
-      engine: engine || undefined,
+      // Convert sentinel back to undefined (means "let VoiceBox decide")
+      engine: engine === ENGINE_AUTO ? undefined : (engine as any),
     });
+    // Set directly here so polling starts immediately — no useEffect delay
+    if (result?.id) setGenerationId(result.id);
   };
 
   const charsLeft = TTS_MAX_CHARS - text.length;
@@ -197,10 +197,10 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
                 <Label htmlFor="tts-engine">Engine</Label>
                 <Select value={engine} onValueChange={setEngine}>
                   <SelectTrigger id="tts-engine">
-                    <SelectValue placeholder="Auto" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Auto (profile default)</SelectItem>
+                    <SelectItem value={ENGINE_AUTO}>Auto (profile default)</SelectItem>
                     {SUPPORTED_ENGINES.map((e) => (
                       <SelectItem key={e.value} value={e.value}>
                         {e.label}
@@ -216,15 +216,10 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
         <Button
           className="w-full gap-2"
           onClick={handleGenerate}
-          disabled={
-            !profileId ||
-            !text.trim() ||
-            generate.isPending ||
-            isProcessing
-          }
+          disabled={!profileId || !text.trim() || isProcessing}
         >
           <Sparkles className="h-4 w-4" />
-          {generate.isPending || isProcessing ? 'Generating...' : 'Generate Speech'}
+          {isProcessing ? 'Generating...' : 'Generate Speech'}
         </Button>
       </div>
 
@@ -241,16 +236,18 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
           </div>
         )}
 
-        {(generate.isPending || isProcessing) && (
-          <div className="space-y-3">
-            <div className="rounded-lg border bg-card p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-sm text-muted-foreground">Generating speech...</span>
-              </div>
-              <Skeleton className="h-2 w-full" />
-              <Skeleton className="h-2 w-3/4" />
+        {isProcessing && (
+          <div className="rounded-lg border bg-card p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-sm text-muted-foreground">
+                {currentGeneration?.status === 'loading_model'
+                  ? 'Loading model...'
+                  : 'Generating speech...'}
+              </span>
             </div>
+            <Skeleton className="h-2 w-full" />
+            <Skeleton className="h-2 w-3/4" />
           </div>
         )}
 

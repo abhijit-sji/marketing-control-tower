@@ -1,7 +1,12 @@
-// VoiceBox API client — direct HTTP calls to local VoiceBox instance.
-// Base URL is configurable via VITE_VOICEBOX_URL for future remote deployment.
+// VoiceBox API client — calls VoiceBox via a same-origin Vite proxy in development
+// to avoid CORS preflight errors. In production (remote VoiceBox URL) the full URL is used.
 
-const BASE_URL = (import.meta.env.VITE_VOICEBOX_URL as string | undefined) ?? 'http://127.0.0.1:17493';
+const configuredUrl = (import.meta.env.VITE_VOICEBOX_URL as string | undefined) ?? 'http://127.0.0.1:17493';
+
+// If VoiceBox is running locally, route through the Vite dev-server proxy at /voicebox-proxy
+// so the browser sees same-origin requests (no CORS). If it's a remote host, use it directly.
+const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test(configuredUrl);
+const BASE_URL = isLocalhost ? '/voicebox-proxy' : configuredUrl;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -16,7 +21,15 @@ export type GenerationEngine =
   | 'tada'
   | 'kokoro';
 
-export type GenerationStatus = 'processing' | 'completed' | 'failed' | 'cancelled';
+// VoiceBox uses these statuses; 'loading_model' appears while the model warms up
+export type GenerationStatus =
+  | 'processing'
+  | 'loading_model'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'canceled'
+  | string;
 
 export type ModelSize = '1.7B' | '0.6B' | '1B' | '3B';
 
@@ -99,8 +112,25 @@ export interface GenerationResponse {
   active_version_id: string | null;
 }
 
-export interface HistoryResponse extends GenerationResponse {
+// HistoryResponse is a flattened version of GenerationResponse without the 'source' field
+export interface HistoryResponse {
+  id: string;
+  profile_id: string;
   profile_name: string;
+  text: string;
+  language: string;
+  audio_path: string | null;
+  duration: number | null;
+  seed: number | null;
+  instruct: string | null;
+  engine: GenerationEngine | null;
+  model_size: ModelSize | null;
+  status: GenerationStatus;
+  error: string | null;
+  is_favorited: boolean;
+  created_at: string;
+  versions: GenerationVersionResponse[] | null;
+  active_version_id: string | null;
 }
 
 export interface HistoryListResponse {

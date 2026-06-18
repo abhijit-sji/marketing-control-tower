@@ -17,8 +17,10 @@ interface GenerationCardProps {
 const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   completed: 'secondary',
   processing: 'outline',
+  loading_model: 'outline',
   failed: 'destructive',
   cancelled: 'outline',
+  canceled: 'outline',
 };
 
 function formatDuration(seconds: number | null): string {
@@ -34,7 +36,9 @@ export function GenerationCard({ generation, onReuseText, compact = false }: Gen
   const deleteGen = useDeleteGeneration();
   const toggleFav = useToggleFavorite();
 
-  const audioUrl = generation.status === 'completed' ? getAudioUrl(generation.id) : null;
+  // audio_path is set once generation completes; use that as ground truth
+  const isReady = generation.status === 'completed' && !!generation.audio_path;
+  const audioUrl = isReady ? getAudioUrl(generation.id) : null;
   const exportUrl = getExportAudioUrl(generation.id);
 
   const handleDownload = async () => {
