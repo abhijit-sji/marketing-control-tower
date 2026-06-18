@@ -289,7 +289,10 @@ function NarrationComposer({
   const isCompleted = statusData?.status === 'completed' && !!statusData.audio_path;
   const isFailed = statusData?.status === 'failed';
   const isPolling =
-    statusData?.status === 'processing' || statusData?.status === 'loading_model';
+    statusData?.status === 'processing' ||
+    statusData?.status === 'loading_model' ||
+    statusData?.status === 'generating' ||
+    statusData?.status === 'queued';
 
   const audioUrl = isCompleted && pendingGenId ? getAudioUrl(pendingGenId) : null;
 
@@ -336,8 +339,10 @@ function NarrationComposer({
     ? 'Sending…'
     : statusData?.status === 'loading_model'
     ? 'Loading model…'
-    : isPolling
+    : statusData?.status === 'generating'
     ? 'Generating…'
+    : isPolling
+    ? 'Processing…'
     : addItem.isPending
     ? 'Adding to story…'
     : null;

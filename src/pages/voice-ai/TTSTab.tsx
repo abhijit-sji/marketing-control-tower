@@ -82,13 +82,17 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
   const isProcessing =
     isGenerating ||
     statusData?.status === 'processing' ||
-    statusData?.status === 'loading_model';
+    statusData?.status === 'loading_model' ||
+    statusData?.status === 'generating' ||
+    statusData?.status === 'queued';
 
   const processingLabel = isGenerating
     ? 'Sending request...'
     : statusData?.status === 'loading_model'
     ? 'Loading model...'
-    : 'Generating speech...';
+    : statusData?.status === 'generating'
+    ? 'Generating speech...'
+    : 'Processing...';
 
   const recentGenerations = historyData?.items ?? [];
 

@@ -128,7 +128,15 @@ export const useGenerateSpeech = () => {
   });
 };
 
-/** Polls a generation's status. Stops polling once status is no longer 'processing'. */
+// All statuses that mean the generation is still in progress
+const IN_PROGRESS_STATUSES = new Set([
+  'processing',
+  'loading_model',
+  'generating',  // VoiceBox uses this during active inference
+  'queued',
+]);
+
+/** Polls a generation's status until it reaches a terminal state. */
 export const useGenerationStatus = (id: string | null, enabled = true) =>
   useQuery({
     queryKey: voiceboxKeys.generation(id ?? ''),
@@ -136,7 +144,7 @@ export const useGenerationStatus = (id: string | null, enabled = true) =>
     enabled: enabled && !!id,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      if (!status || status === 'processing') return 2000;
+      if (!status || IN_PROGRESS_STATUSES.has(status)) return 2000;
       return false;
     },
     staleTime: 0,
