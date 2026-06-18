@@ -24,7 +24,7 @@ export function HistoryTab({ onReuseText }: HistoryTabProps) {
   const [profileFilter, setProfileFilter] = useState('');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
-  const { data, isLoading, error } = useHistory(200);
+  const { data, isLoading, error } = useHistory(100);
   const generations = data?.items ?? [];
 
   const profileNames = useMemo(() => {

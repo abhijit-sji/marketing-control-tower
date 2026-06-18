@@ -328,8 +328,10 @@ export const getExportAudioUrl = (generationId: string): string =>
 
 // ─── History ─────────────────────────────────────────────────────────────────
 
-export const listHistory = (limit = 100): Promise<HistoryListResponse> =>
-  vbFetch<HistoryListResponse>(`/history?limit=${limit}`);
+// VoiceBox caps history limit at 100 — exceeding it returns HTTP 500
+const HISTORY_MAX_LIMIT = 100;
+export const listHistory = (limit = 50): Promise<HistoryListResponse> =>
+  vbFetch<HistoryListResponse>(`/history?limit=${Math.min(limit, HISTORY_MAX_LIMIT)}`);
 
 // ─── Stories ─────────────────────────────────────────────────────────────────
 

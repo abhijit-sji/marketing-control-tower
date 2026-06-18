@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles, AlertCircle, Plus, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -41,6 +42,7 @@ interface TTSTabProps {
 }
 
 export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
+  const navigate = useNavigate();
   const [text, setText] = useState(initialText);
   const [profileId, setProfileId] = useState(initialProfileId ?? '');
   const [language, setLanguage] = useState('en');
@@ -266,16 +268,24 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
               src={audioUrl}
               filename={`${selectedProfile?.name ?? 'audio'}-${currentGeneration.id.slice(0, 8)}.wav`}
             />
-            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-              {currentGeneration.duration != null && (
-                <Badge variant="secondary">{currentGeneration.duration.toFixed(1)}s</Badge>
-              )}
-              {currentGeneration.engine && (
-                <Badge variant="outline">{currentGeneration.engine}</Badge>
-              )}
-              {currentGeneration.language && (
-                <Badge variant="outline">{currentGeneration.language.toUpperCase()}</Badge>
-              )}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                {currentGeneration.duration != null && (
+                  <Badge variant="secondary">{currentGeneration.duration.toFixed(1)}s</Badge>
+                )}
+                {currentGeneration.engine && (
+                  <Badge variant="outline">{currentGeneration.engine}</Badge>
+                )}
+                {currentGeneration.language && (
+                  <Badge variant="outline">{currentGeneration.language.toUpperCase()}</Badge>
+                )}
+              </div>
+              <button
+                className="text-xs text-primary hover:underline"
+                onClick={() => navigate('/voice-ai?tab=history')}
+              >
+                View all in History →
+              </button>
             </div>
           </div>
         )}
