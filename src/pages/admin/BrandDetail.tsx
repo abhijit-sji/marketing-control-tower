@@ -192,7 +192,7 @@ const BrandDetail = () => {
       const queryValue = brandSlug;
 
       // Construct the URL with query parameters
-      const SUPABASE_URL = 'https://fzknasqrludvoyxdzbxl.supabase.co';
+      const SUPABASE_URL = 'https://xgsbkyfmyaqbgqabeqcg.supabase.co';
       const functionUrl = `${SUPABASE_URL}/functions/v1/admin-brands?${queryParam}=${encodeURIComponent(queryValue)}`;
       
       const fetchResponse = await fetch(functionUrl, {

@@ -46,7 +46,7 @@ Combine tasks and time records into the format our edge function expects.
 
 **Configuration:**
 - Method: `POST`
-- URL: `https://fzknasqrludvoyxdzbxl.supabase.co/functions/v1/eod-data-sync`
+- URL: `https://xgsbkyfmyaqbgqabeqcg.supabase.co/functions/v1/eod-data-sync`
 - Headers:
   ```
   Content-Type: application/json

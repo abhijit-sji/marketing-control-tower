@@ -678,7 +678,7 @@ The migration `20260116000000_add_created_by_to_project_tasks.sql` adds:
 ### TypeScript Types
 Generated types include the new `created_by` field. If needed, regenerate:
 ```bash
-supabase gen types typescript --project-id fzknasqrludvoyxdzbxl > src/integrations/supabase/types.ts
+supabase gen types typescript --project-id xgsbkyfmyaqbgqabeqcg > src/integrations/supabase/types.ts
 ```
 
 ### UI/UX Changes

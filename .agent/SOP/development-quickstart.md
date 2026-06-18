@@ -28,7 +28,7 @@ npm install
 ### 2. Environment Configuration
 
 The project connects to a Supabase project. Configuration is handled through:
-- **Supabase project ID:** `fzknasqrludvoyxdzbxl`
+- **Supabase project ID:** `xgsbkyfmyaqbgqabeqcg`
 - **Edge Functions:** Secrets configured in Supabase Dashboard
 
 For local development, create `.env.local` if needed for any local overrides.

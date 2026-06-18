@@ -24,7 +24,7 @@ DECLARE
 BEGIN
   -- Trigger the edge function via pg_net
   SELECT net.http_post(
-    url := 'https://fzknasqrludvoyxdzbxl.supabase.co/functions/v1/process-knowledge-jobs',
+    url := 'https://xgsbkyfmyaqbgqabeqcg.supabase.co/functions/v1/process-knowledge-jobs',
     headers := jsonb_build_object(
       'Content-Type', 'application/json'
     ),

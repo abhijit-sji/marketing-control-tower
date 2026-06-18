@@ -66,7 +66,7 @@ npm install
 ### Step 3: Configure Environment Variables
 
 The project uses Supabase with hardcoded configuration:
-- **Project ID:** `fzknasqrludvoyxdzbxl`
+- **Project ID:** `xgsbkyfmyaqbgqabeqcg`
 - **Configuration:** `src/integrations/supabase/client.ts`
 
 For Edge Functions, secrets are configured in the Supabase Dashboard:

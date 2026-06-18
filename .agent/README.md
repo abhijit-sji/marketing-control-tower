@@ -293,7 +293,7 @@ Best practices and step-by-step guides for common development tasks.
 3. Update RLS policies if needed
 4. Regenerate TypeScript types:
    ```bash
-   supabase gen types typescript --project-id fzknasqrludvoyxdzbxl > src/integrations/supabase/types.ts
+   supabase gen types typescript --project-id xgsbkyfmyaqbgqabeqcg > src/integrations/supabase/types.ts
    ```
 5. Update database_schema.md documentation
 
@@ -322,7 +322,7 @@ supabase functions serve <function-name>   # Test locally
 ```bash
 # Generate TypeScript types from database schema
 supabase gen types typescript \
-  --project-id fzknasqrludvoyxdzbxl \
+  --project-id xgsbkyfmyaqbgqabeqcg \
   > src/integrations/supabase/types.ts
 ```
 

@@ -1163,7 +1163,7 @@ project_tasks.project_id → projects.id ON DELETE CASCADE
 **Auto-Generate TypeScript Types:**
 ```bash
 supabase gen types typescript \
-  --project-id fzknasqrludvoyxdzbxl \
+  --project-id xgsbkyfmyaqbgqabeqcg \
   > src/integrations/supabase/types.ts
 ```
 
