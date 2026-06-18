@@ -539,7 +539,7 @@ export default defineConfig(({ mode }) => ({
 
 **Supabase (`supabase/config.toml`):**
 ```toml
-project_id = "xgsbkyfmyaqbgqabeqcg"
+project_id = "tkdksyfudpzxrlnvybqz"
 
 [functions.stream-ai-response]
 verify_jwt = false  # No auth for streaming
@@ -566,7 +566,7 @@ supabase functions serve <function-name>   # Local testing
 
 # Database Types
 supabase gen types typescript \
-  --project-id xgsbkyfmyaqbgqabeqcg \
+  --project-id tkdksyfudpzxrlnvybqz \
   > src/integrations/supabase/types.ts
 ```
 

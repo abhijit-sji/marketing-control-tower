@@ -49,7 +49,7 @@ export function useStreamAIResponse() {
 
     try {
       const response = await fetch(
-        'https://xgsbkyfmyaqbgqabeqcg.supabase.co/functions/v1/stream-ai-response',
+        'https://tkdksyfudpzxrlnvybqz.supabase.co/functions/v1/stream-ai-response',
         {
           method: 'POST',
           headers: {

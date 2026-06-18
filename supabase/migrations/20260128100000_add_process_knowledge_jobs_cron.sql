@@ -26,7 +26,7 @@ SELECT cron.schedule(
   '* * * * *', -- Every minute
   $$
   SELECT net.http_post(
-    url := 'https://xgsbkyfmyaqbgqabeqcg.supabase.co/functions/v1/process-knowledge-jobs',
+    url := 'https://tkdksyfudpzxrlnvybqz.supabase.co/functions/v1/process-knowledge-jobs',
     headers := jsonb_build_object(
       'Content-Type', 'application/json'
     ),

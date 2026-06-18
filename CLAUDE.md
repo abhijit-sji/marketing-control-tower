@@ -464,5 +464,5 @@ Components are in `src/components/ui/`. To add new shadcn components, they shoul
 ### Database Type Updates
 When the Supabase schema changes, regenerate types:
 ```bash
-supabase gen types typescript --project-id xgsbkyfmyaqbgqabeqcg > src/integrations/supabase/types.ts
+supabase gen types typescript --project-id tkdksyfudpzxrlnvybqz > src/integrations/supabase/types.ts
 ```

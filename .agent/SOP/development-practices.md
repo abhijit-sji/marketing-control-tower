@@ -43,7 +43,7 @@ npm install
 cp .env.example .env.local
 
 # Add Supabase credentials to .env.local
-VITE_SUPABASE_URL=https://xgsbkyfmyaqbgqabeqcg.supabase.co
+VITE_SUPABASE_URL=https://tkdksyfudpzxrlnvybqz.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
 
 # Start development server
@@ -82,7 +82,7 @@ npm run dev
 
 **Frontend (.env.local):**
 ```bash
-VITE_SUPABASE_URL=https://xgsbkyfmyaqbgqabeqcg.supabase.co
+VITE_SUPABASE_URL=https://tkdksyfudpzxrlnvybqz.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
 
@@ -708,7 +708,7 @@ supabase functions logs function-name
 **Type errors:**
 ```bash
 # Regenerate Supabase types
-supabase gen types typescript --project-id xgsbkyfmyaqbgqabeqcg > src/integrations/supabase/types.ts
+supabase gen types typescript --project-id tkdksyfudpzxrlnvybqz > src/integrations/supabase/types.ts
 ```
 
 **Edge function not deploying:**
