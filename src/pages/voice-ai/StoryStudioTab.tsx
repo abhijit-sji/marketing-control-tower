@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Plus,
   Trash2,
@@ -421,6 +421,15 @@ function AddNarrationDialog({ storyId, open, onOpenChange }: AddNarrationDialogP
   const generate = useGenerateSpeech();
   const addItem = useAddStoryItem();
 
+  const selectedProfile = profiles.find((p) => p.id === profileId);
+
+  // Reset engine override when switching to a preset profile (API enforces its own engine)
+  useEffect(() => {
+    if (selectedProfile?.voice_type === 'preset') {
+      setEngine(ENGINE_AUTO);
+    }
+  }, [selectedProfile?.id, selectedProfile?.voice_type]);
+
   const { data: statusData } = useGenerationStatus(pendingGenId, !!pendingGenId);
 
   const isProcessing =
@@ -433,10 +442,15 @@ function AddNarrationDialog({ storyId, open, onOpenChange }: AddNarrationDialogP
   const handleGenerate = async () => {
     if (!profileId || !text.trim()) return;
     setPendingGenId(null);
+    // Preset profiles lock their engine — never pass an override for them
+    const engineOverride =
+      selectedProfile?.voice_type === 'preset' || engine === ENGINE_AUTO
+        ? undefined
+        : (engine as any);
     const result = await generate.mutateAsync({
       profile_id: profileId,
       text: text.trim(),
-      engine: engine === ENGINE_AUTO ? undefined : (engine as any),
+      engine: engineOverride,
     });
     // Set directly — no useEffect delay
     if (result?.id) setPendingGenId(result.id);
@@ -506,7 +520,12 @@ function AddNarrationDialog({ storyId, open, onOpenChange }: AddNarrationDialogP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="narration-engine">Engine (optional)</Label>
+            <Label htmlFor="narration-engine">Engine</Label>
+            {selectedProfile?.voice_type === 'preset' ? (
+              <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm text-muted-foreground">
+                {selectedProfile.default_engine ?? 'Profile default'} (locked for preset)
+              </div>
+            ) : (
             <Select value={engine} onValueChange={setEngine}>
               <SelectTrigger id="narration-engine">
                 <SelectValue />
@@ -518,6 +537,7 @@ function AddNarrationDialog({ storyId, open, onOpenChange }: AddNarrationDialogP
                 ))}
               </SelectContent>
             </Select>
+            )}
           </div>
 
           <Button

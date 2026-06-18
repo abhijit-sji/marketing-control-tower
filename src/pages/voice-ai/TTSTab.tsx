@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, AlertCircle, Plus, ChevronDown } from 'lucide-react';
+import { Sparkles, AlertCircle, Plus, ChevronDown, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -25,13 +25,17 @@ import {
   useVoiceProfiles,
   useGenerateSpeech,
   useGenerationStatus,
+  useHistory,
+  useDeleteGeneration,
+  useToggleFavorite,
 } from '@/features/voicebox/hooks';
 import {
   TTS_MAX_CHARS,
   SUPPORTED_LANGUAGES,
   SUPPORTED_ENGINES,
 } from '@/features/voicebox/types';
-import { getAudioUrl } from '@/Api/voiceboxApi';
+import { getAudioUrl, getExportAudioUrl } from '@/Api/voiceboxApi';
+import { Star, Trash2, Download } from 'lucide-react';
 
 // Sentinel for the "auto" engine option — Radix Select forbids empty-string values
 const ENGINE_AUTO = '__auto__';
@@ -44,7 +48,7 @@ interface TTSTabProps {
 export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
   const navigate = useNavigate();
 
-  // ── Form state ────────────────────────────────────────────────────────────
+  // ── Form state ─────────────────────────────────────────────────────────────
   const [text, setText] = useState(initialText);
   const [profileId, setProfileId] = useState(initialProfileId ?? '');
   const [language, setLanguage] = useState('en');
@@ -52,89 +56,114 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [createVoiceOpen, setCreateVoiceOpen] = useState(false);
 
-  // ── Generation state ──────────────────────────────────────────────────────
-  // We drive state ourselves so TanStack Query's cached .data from prior
-  // generations never bleeds into the current generation's display.
-  const [isGenerating, setIsGenerating] = useState(false); // true during POST
-  const [currentGenId, setCurrentGenId] = useState<string | null>(null); // ID to poll
+  // ── Generation state ───────────────────────────────────────────────────────
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [currentGenId, setCurrentGenId] = useState<string | null>(null);
 
-  // ── Data ──────────────────────────────────────────────────────────────────
+  // ── Data ───────────────────────────────────────────────────────────────────
   const { data: profiles = [], isLoading: profilesLoading } = useVoiceProfiles();
   const generate = useGenerateSpeech();
+  const { data: historyData, refetch: refetchHistory } = useHistory(20);
+  const deleteGen = useDeleteGeneration();
+  const toggleFav = useToggleFavorite();
 
-  // Poll status every 2 s while we have a generation ID; stops automatically
-  // when status leaves 'processing'/'loading_model' (see hook).
+  // Poll the active generation until it completes
   const { data: statusData } = useGenerationStatus(currentGenId, currentGenId !== null);
 
-  // ── Derived state ─────────────────────────────────────────────────────────
-  // Only use statusData — never fall back to stale generate.data
-  const currentGeneration = statusData ?? null;
-  const isCompleted = currentGeneration?.status === 'completed';
-  const isFailed = currentGeneration?.status === 'failed';
+  // When polling shows completion, refresh the history feed
+  useEffect(() => {
+    if (statusData?.status === 'completed' || statusData?.status === 'failed') {
+      refetchHistory();
+      setCurrentGenId(null);
+    }
+  }, [statusData?.status, refetchHistory]);
+
+  // ── Derived ────────────────────────────────────────────────────────────────
   const isProcessing =
     isGenerating ||
-    currentGeneration?.status === 'processing' ||
-    currentGeneration?.status === 'loading_model';
+    statusData?.status === 'processing' ||
+    statusData?.status === 'loading_model';
 
-  const audioUrl = isCompleted && currentGeneration?.audio_path
-    ? getAudioUrl(currentGeneration.id)
-    : null;
+  const processingLabel = isGenerating
+    ? 'Sending request...'
+    : statusData?.status === 'loading_model'
+    ? 'Loading model...'
+    : 'Generating speech...';
 
-  // ── Side-effects ──────────────────────────────────────────────────────────
-  // Auto-select first profile on load
+  const recentGenerations = historyData?.items ?? [];
+
+  // ── Side-effects ───────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!profileId && profiles.length > 0) {
-      setProfileId(profiles[0].id);
-    }
+    if (!profileId && profiles.length > 0) setProfileId(profiles[0].id);
   }, [profiles, profileId]);
 
-  // Pre-fill text when "Reuse text" is clicked from History tab
   useEffect(() => {
     if (initialText) setText(initialText);
   }, [initialText]);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  // When switching to a preset profile, the API enforces its own engine — reset any override
+  const selectedProfile = profiles.find((p) => p.id === profileId);
+  useEffect(() => {
+    if (selectedProfile?.voice_type === 'preset') {
+      setEngine(ENGINE_AUTO);
+    }
+  }, [selectedProfile?.id, selectedProfile?.voice_type]);
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
   const handleGenerate = async () => {
     if (!profileId || !text.trim()) return;
-
-    // Clear previous result immediately so the output panel goes blank
     setCurrentGenId(null);
     setIsGenerating(true);
-
     try {
+      // Preset profiles enforce their own engine — never pass an engine override for them
+      const engineOverride =
+        selectedProfile?.voice_type === 'preset' || engine === ENGINE_AUTO
+          ? undefined
+          : (engine as any);
+
       const result = await generate.mutateAsync({
         profile_id: profileId,
         text: text.trim(),
         language,
-        engine: engine === ENGINE_AUTO ? undefined : (engine as any),
+        engine: engineOverride,
       });
-      // Set ID directly — no useEffect delay — starts polling immediately
       if (result?.id) setCurrentGenId(result.id);
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const charsLeft = TTS_MAX_CHARS - text.length;
-  const selectedProfile = profiles.find((p) => p.id === profileId);
+  const handleDownload = async (genId: string, profileName: string) => {
+    const url = getExportAudioUrl(genId);
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${profileName}-${genId.slice(0, 8)}.wav`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      window.open(url, '_blank');
+    }
+  };
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  const charsLeft = TTS_MAX_CHARS - text.length;
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* ── Left panel: input ─────────────────────────────────────────────── */}
+
+      {/* ── Left: controls ────────────────────────────────────────────────── */}
       <div className="space-y-4">
+
         {/* Voice selector */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="tts-profile">Voice</Label>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 text-xs gap-1"
-              onClick={() => setCreateVoiceOpen(true)}
-            >
-              <Plus className="h-3 w-3" />
-              New voice
+            <Button variant="ghost" size="sm" className="h-6 text-xs gap-1"
+              onClick={() => setCreateVoiceOpen(true)}>
+              <Plus className="h-3 w-3" /> New voice
             </Button>
           </div>
 
@@ -191,9 +220,7 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
         <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground px-0">
-              <ChevronDown
-                className={`h-4 w-4 transition-transform ${advancedOpen ? 'rotate-180' : ''}`}
-              />
+              <ChevronDown className={`h-4 w-4 transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
               Advanced options
             </Button>
           </CollapsibleTrigger>
@@ -202,9 +229,7 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
               <div className="space-y-2">
                 <Label htmlFor="tts-language">Language</Label>
                 <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger id="tts-language">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger id="tts-language"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {SUPPORTED_LANGUAGES.map((l) => (
                       <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
@@ -214,17 +239,21 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tts-engine">Engine</Label>
-                <Select value={engine} onValueChange={setEngine}>
-                  <SelectTrigger id="tts-engine">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ENGINE_AUTO}>Auto (profile default)</SelectItem>
-                    {SUPPORTED_ENGINES.map((e) => (
-                      <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {selectedProfile?.voice_type === 'preset' ? (
+                  <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm text-muted-foreground">
+                    {selectedProfile.default_engine ?? 'Profile default'} (locked for preset)
+                  </div>
+                ) : (
+                  <Select value={engine} onValueChange={setEngine}>
+                    <SelectTrigger id="tts-engine"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ENGINE_AUTO}>Auto (profile default)</SelectItem>
+                      {SUPPORTED_ENGINES.map((e) => (
+                        <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
           </CollapsibleContent>
@@ -233,81 +262,122 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
         <Button
           className="w-full gap-2"
           onClick={handleGenerate}
-          disabled={!profileId || !text.trim() || isProcessing || isGenerating}
+          disabled={!profileId || !text.trim() || isProcessing}
         >
           <Sparkles className="h-4 w-4" />
-          {isGenerating || isProcessing ? 'Generating...' : 'Generate Speech'}
+          {isProcessing ? processingLabel : 'Generate Speech'}
         </Button>
       </div>
 
-      {/* ── Right panel: output ───────────────────────────────────────────── */}
-      <div className="space-y-4">
-        <Label>Output</Label>
+      {/* ── Right: live generation feed ───────────────────────────────────── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label>Recent generations</Label>
+          {recentGenerations.length > 0 && (
+            <button
+              className="text-xs text-primary hover:underline"
+              onClick={() => navigate('/voice-ai?tab=history')}
+            >
+              View all →
+            </button>
+          )}
+        </div>
 
-        {/* Empty state: nothing happening, no result yet */}
-        {!isGenerating && !isProcessing && !currentGeneration && (
+        {/* In-progress card */}
+        {isProcessing && (
+          <div className="rounded-lg border bg-card p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-primary animate-pulse shrink-0" />
+              <span className="text-sm font-medium">{processingLabel}</span>
+            </div>
+            <p className="text-xs text-muted-foreground line-clamp-2">{text}</p>
+            <Skeleton className="h-8 w-full rounded" />
+          </div>
+        )}
+
+        {/* History feed */}
+        {recentGenerations.length === 0 && !isProcessing ? (
           <div className="flex flex-col items-center justify-center h-40 rounded-lg border border-dashed gap-3 text-center p-4">
-            <Sparkles className="h-8 w-8 text-muted-foreground" />
+            <Clock className="h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
               Generated audio will appear here
             </p>
           </div>
-        )}
+        ) : (
+          <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
+            {recentGenerations.map((gen) => {
+              const isReady = gen.status === 'completed' && !!gen.audio_path;
+              const audioUrl = isReady ? getAudioUrl(gen.id) : null;
+              return (
+                <div key={gen.id} className="rounded-lg border bg-card p-3 space-y-2">
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-medium truncate">{gen.profile_name}</span>
+                      <Badge
+                        variant={gen.status === 'completed' ? 'secondary' : gen.status === 'failed' ? 'destructive' : 'outline'}
+                        className="text-xs shrink-0"
+                      >
+                        {gen.status}
+                      </Badge>
+                      {gen.duration != null && (
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {gen.duration.toFixed(1)}s
+                        </span>
+                      )}
+                    </div>
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        className={`p-1 rounded hover:bg-muted transition-colors ${gen.is_favorited ? 'text-yellow-500' : 'text-muted-foreground'}`}
+                        onClick={() => toggleFav.mutate(gen.id)}
+                        title="Toggle favorite"
+                      >
+                        <Star className="h-3.5 w-3.5" fill={gen.is_favorited ? 'currentColor' : 'none'} />
+                      </button>
+                      {audioUrl && (
+                        <button
+                          className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground"
+                          onClick={() => handleDownload(gen.id, gen.profile_name)}
+                          title="Download"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                      <button
+                        className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-destructive"
+                        onClick={() => deleteGen.mutate(gen.id)}
+                        title="Delete"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
 
-        {/* Loading state: POST in flight or model processing */}
-        {(isGenerating || isProcessing) && (
-          <div className="rounded-lg border bg-card p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-sm text-muted-foreground">
-                {isGenerating
-                  ? 'Sending request...'
-                  : currentGeneration?.status === 'loading_model'
-                  ? 'Loading model...'
-                  : 'Generating speech...'}
-              </span>
-            </div>
-            <Skeleton className="h-2 w-full" />
-            <Skeleton className="h-2 w-3/4" />
-          </div>
-        )}
+                  {/* Text snippet */}
+                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                    {gen.text}
+                  </p>
 
-        {/* Error state */}
-        {isFailed && !isProcessing && !isGenerating && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {currentGeneration?.error ?? 'Generation failed. Please try again.'}
-            </AlertDescription>
-          </Alert>
-        )}
+                  {/* Audio player */}
+                  {audioUrl && (
+                    <AudioPlayer
+                      src={audioUrl}
+                      filename={`${gen.profile_name}-${gen.id.slice(0, 8)}.wav`}
+                      compact
+                    />
+                  )}
 
-        {/* Success state */}
-        {isCompleted && audioUrl && currentGeneration && !isGenerating && !isProcessing && (
-          <div className="space-y-3">
-            <AudioPlayer
-              src={audioUrl}
-              filename={`${selectedProfile?.name ?? 'audio'}-${currentGeneration.id.slice(0, 8)}.wav`}
-            />
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-                {currentGeneration.duration != null && (
-                  <Badge variant="secondary">{currentGeneration.duration.toFixed(1)}s</Badge>
-                )}
-                {currentGeneration.engine && (
-                  <Badge variant="outline">{currentGeneration.engine}</Badge>
-                )}
-                {currentGeneration.language && (
-                  <Badge variant="outline">{currentGeneration.language.toUpperCase()}</Badge>
-                )}
-              </div>
-              <button
-                className="text-xs text-primary hover:underline"
-                onClick={() => navigate('/voice-ai?tab=history')}
-              >
-                View all in History →
-              </button>
-            </div>
+                  {/* Reuse text */}
+                  <button
+                    className="text-xs text-primary hover:underline"
+                    onClick={() => setText(gen.text)}
+                  >
+                    ↺ Reuse this text
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
