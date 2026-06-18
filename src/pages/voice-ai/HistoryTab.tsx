@@ -21,7 +21,8 @@ interface HistoryTabProps {
 
 export function HistoryTab({ onReuseText }: HistoryTabProps) {
   const [search, setSearch] = useState('');
-  const [profileFilter, setProfileFilter] = useState('');
+  const FILTER_ALL = '__all__';
+  const [profileFilter, setProfileFilter] = useState(FILTER_ALL);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   const { data, isLoading, error } = useHistory(100);
@@ -34,7 +35,7 @@ export function HistoryTab({ onReuseText }: HistoryTabProps) {
 
   const filtered = useMemo(() => {
     let result = generations;
-    if (profileFilter) {
+    if (profileFilter && profileFilter !== FILTER_ALL) {
       result = result.filter((g) => g.profile_name === profileFilter);
     }
     if (showFavoritesOnly) {
@@ -90,10 +91,10 @@ export function HistoryTab({ onReuseText }: HistoryTabProps) {
         {profileNames.length > 1 && (
           <Select value={profileFilter} onValueChange={setProfileFilter}>
             <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="All voices" />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All voices</SelectItem>
+              <SelectItem value={FILTER_ALL}>All voices</SelectItem>
               {profileNames.map((name) => (
                 <SelectItem key={name} value={name}>
                   {name}

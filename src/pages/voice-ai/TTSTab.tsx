@@ -43,65 +43,85 @@ interface TTSTabProps {
 
 export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
   const navigate = useNavigate();
+
+  // ── Form state ────────────────────────────────────────────────────────────
   const [text, setText] = useState(initialText);
   const [profileId, setProfileId] = useState(initialProfileId ?? '');
   const [language, setLanguage] = useState('en');
   const [engine, setEngine] = useState(ENGINE_AUTO);
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [generationId, setGenerationId] = useState<string | null>(null);
   const [createVoiceOpen, setCreateVoiceOpen] = useState(false);
 
+  // ── Generation state ──────────────────────────────────────────────────────
+  // We drive state ourselves so TanStack Query's cached .data from prior
+  // generations never bleeds into the current generation's display.
+  const [isGenerating, setIsGenerating] = useState(false); // true during POST
+  const [currentGenId, setCurrentGenId] = useState<string | null>(null); // ID to poll
+
+  // ── Data ──────────────────────────────────────────────────────────────────
   const { data: profiles = [], isLoading: profilesLoading } = useVoiceProfiles();
   const generate = useGenerateSpeech();
 
-  // Poll status until the generation completes or fails
-  const { data: statusData } = useGenerationStatus(generationId, generationId !== null);
+  // Poll status every 2 s while we have a generation ID; stops automatically
+  // when status leaves 'processing'/'loading_model' (see hook).
+  const { data: statusData } = useGenerationStatus(currentGenId, currentGenId !== null);
 
-  // Auto-select first available profile
+  // ── Derived state ─────────────────────────────────────────────────────────
+  // Only use statusData — never fall back to stale generate.data
+  const currentGeneration = statusData ?? null;
+  const isCompleted = currentGeneration?.status === 'completed';
+  const isFailed = currentGeneration?.status === 'failed';
+  const isProcessing =
+    isGenerating ||
+    currentGeneration?.status === 'processing' ||
+    currentGeneration?.status === 'loading_model';
+
+  const audioUrl = isCompleted && currentGeneration?.audio_path
+    ? getAudioUrl(currentGeneration.id)
+    : null;
+
+  // ── Side-effects ──────────────────────────────────────────────────────────
+  // Auto-select first profile on load
   useEffect(() => {
     if (!profileId && profiles.length > 0) {
       setProfileId(profiles[0].id);
     }
   }, [profiles, profileId]);
 
-  // Pre-fill text when "Reuse text" is clicked in History tab
+  // Pre-fill text when "Reuse text" is clicked from History tab
   useEffect(() => {
     if (initialText) setText(initialText);
   }, [initialText]);
 
-  // Derive current state from latest status poll or mutation result
-  const currentGeneration = statusData ?? generate.data ?? null;
-  const isCompleted = currentGeneration?.status === 'completed';
-  const isFailed = currentGeneration?.status === 'failed';
-  // loading_model is VoiceBox's "model is warming up" transitional state
-  const isProcessing =
-    generate.isPending ||
-    currentGeneration?.status === 'processing' ||
-    currentGeneration?.status === 'loading_model';
-
-  const audioUrl = isCompleted && currentGeneration ? getAudioUrl(currentGeneration.id) : null;
-
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleGenerate = async () => {
     if (!profileId || !text.trim()) return;
-    // Reset previous result before new generation
-    setGenerationId(null);
-    const result = await generate.mutateAsync({
-      profile_id: profileId,
-      text: text.trim(),
-      language,
-      // Convert sentinel back to undefined (means "let VoiceBox decide")
-      engine: engine === ENGINE_AUTO ? undefined : (engine as any),
-    });
-    // Set directly here so polling starts immediately — no useEffect delay
-    if (result?.id) setGenerationId(result.id);
+
+    // Clear previous result immediately so the output panel goes blank
+    setCurrentGenId(null);
+    setIsGenerating(true);
+
+    try {
+      const result = await generate.mutateAsync({
+        profile_id: profileId,
+        text: text.trim(),
+        language,
+        engine: engine === ENGINE_AUTO ? undefined : (engine as any),
+      });
+      // Set ID directly — no useEffect delay — starts polling immediately
+      if (result?.id) setCurrentGenId(result.id);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const charsLeft = TTS_MAX_CHARS - text.length;
   const selectedProfile = profiles.find((p) => p.id === profileId);
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Left panel — input */}
+      {/* ── Left panel: input ─────────────────────────────────────────────── */}
       <div className="space-y-4">
         {/* Voice selector */}
         <div className="space-y-2">
@@ -117,6 +137,7 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
               New voice
             </Button>
           </div>
+
           {profilesLoading ? (
             <Skeleton className="h-9 w-full" />
           ) : profiles.length === 0 ? (
@@ -139,9 +160,7 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
                   <SelectItem key={p.id} value={p.id}>
                     <span className="flex items-center gap-2">
                       {p.name}
-                      <Badge variant="outline" className="text-xs">
-                        {p.voice_type}
-                      </Badge>
+                      <Badge variant="outline" className="text-xs">{p.voice_type}</Badge>
                     </span>
                   </SelectItem>
                 ))}
@@ -188,9 +207,7 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {SUPPORTED_LANGUAGES.map((l) => (
-                      <SelectItem key={l.value} value={l.value}>
-                        {l.label}
-                      </SelectItem>
+                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -204,9 +221,7 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
                   <SelectContent>
                     <SelectItem value={ENGINE_AUTO}>Auto (profile default)</SelectItem>
                     {SUPPORTED_ENGINES.map((e) => (
-                      <SelectItem key={e.value} value={e.value}>
-                        {e.label}
-                      </SelectItem>
+                      <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -218,18 +233,19 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
         <Button
           className="w-full gap-2"
           onClick={handleGenerate}
-          disabled={!profileId || !text.trim() || isProcessing}
+          disabled={!profileId || !text.trim() || isProcessing || isGenerating}
         >
           <Sparkles className="h-4 w-4" />
-          {isProcessing ? 'Generating...' : 'Generate Speech'}
+          {isGenerating || isProcessing ? 'Generating...' : 'Generate Speech'}
         </Button>
       </div>
 
-      {/* Right panel — output */}
+      {/* ── Right panel: output ───────────────────────────────────────────── */}
       <div className="space-y-4">
         <Label>Output</Label>
 
-        {!currentGeneration && !generate.isPending && (
+        {/* Empty state: nothing happening, no result yet */}
+        {!isGenerating && !isProcessing && !currentGeneration && (
           <div className="flex flex-col items-center justify-center h-40 rounded-lg border border-dashed gap-3 text-center p-4">
             <Sparkles className="h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
@@ -238,12 +254,15 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
           </div>
         )}
 
-        {isProcessing && (
+        {/* Loading state: POST in flight or model processing */}
+        {(isGenerating || isProcessing) && (
           <div className="rounded-lg border bg-card p-4 space-y-3">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
               <span className="text-sm text-muted-foreground">
-                {currentGeneration?.status === 'loading_model'
+                {isGenerating
+                  ? 'Sending request...'
+                  : currentGeneration?.status === 'loading_model'
                   ? 'Loading model...'
                   : 'Generating speech...'}
               </span>
@@ -253,7 +272,8 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
           </div>
         )}
 
-        {isFailed && (
+        {/* Error state */}
+        {isFailed && !isProcessing && !isGenerating && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
@@ -262,7 +282,8 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
           </Alert>
         )}
 
-        {isCompleted && audioUrl && currentGeneration && (
+        {/* Success state */}
+        {isCompleted && audioUrl && currentGeneration && !isGenerating && !isProcessing && (
           <div className="space-y-3">
             <AudioPlayer
               src={audioUrl}
