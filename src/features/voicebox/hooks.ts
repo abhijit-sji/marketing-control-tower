@@ -280,3 +280,62 @@ export const useRemoveStoryItem = () => {
     },
   });
 };
+
+export const useReorderStoryItems = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ storyId, generationIds }: { storyId: string; generationIds: string[] }) =>
+      api.reorderStoryItems(storyId, generationIds),
+    onSuccess: (_, { storyId }) => {
+      queryClient.invalidateQueries({ queryKey: voiceboxKeys.story(storyId) });
+    },
+  });
+};
+
+export const useSetStoryItemVolume = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ storyId, itemId, volume }: { storyId: string; itemId: string; volume: number }) =>
+      api.setStoryItemVolume(storyId, itemId, volume),
+    onSuccess: (_, { storyId }) => {
+      queryClient.invalidateQueries({ queryKey: voiceboxKeys.story(storyId) });
+    },
+  });
+};
+
+export const useDuplicateStoryItem = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ storyId, itemId }: { storyId: string; itemId: string }) =>
+      api.duplicateStoryItem(storyId, itemId),
+    onSuccess: (_, { storyId }) => {
+      queryClient.invalidateQueries({ queryKey: voiceboxKeys.story(storyId) });
+      queryClient.invalidateQueries({ queryKey: voiceboxKeys.stories() });
+      toast({ title: 'Narration duplicated' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Failed to duplicate', description: err.message, variant: 'destructive' });
+    },
+  });
+};
+
+export const useTrimStoryItem = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      storyId,
+      itemId,
+      trimStartMs,
+      trimEndMs,
+    }: { storyId: string; itemId: string; trimStartMs: number; trimEndMs: number }) =>
+      api.trimStoryItem(storyId, itemId, trimStartMs, trimEndMs),
+    onSuccess: (_, { storyId }) => {
+      queryClient.invalidateQueries({ queryKey: voiceboxKeys.story(storyId) });
+    },
+  });
+};

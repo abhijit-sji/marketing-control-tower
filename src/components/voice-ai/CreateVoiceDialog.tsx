@@ -1,5 +1,59 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Upload, Mic, Square, Play, Pause, Trash2, RotateCcw } from 'lucide-react';
+import { Upload, Mic, Square, Play, Pause, RotateCcw, Loader2 } from 'lucide-react';
+
+// ─── WebM → WAV converter ─────────────────────────────────────────────────────
+// VoiceBox rejects WebM/Opus from MediaRecorder; decode via AudioContext and
+// re-encode as uncompressed 16-bit PCM WAV which is universally accepted.
+
+function writeWav(channelData: Float32Array[], sampleRate: number): ArrayBuffer {
+  const numChannels = channelData.length;
+  const numSamples = channelData[0].length;
+  const byteRate = sampleRate * numChannels * 2; // 16-bit = 2 bytes/sample
+  const dataSize = numSamples * numChannels * 2;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+
+  const write = (off: number, val: string) =>
+    [...val].forEach((c, i) => view.setUint8(off + i, c.charCodeAt(0)));
+  write(0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  write(8, 'WAVE');
+  write(12, 'fmt ');
+  view.setUint32(16, 16, true);           // PCM chunk size
+  view.setUint16(20, 1, true);            // PCM format
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, numChannels * 2, true);
+  view.setUint16(34, 16, true);           // bits per sample
+  write(36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  let offset = 44;
+  for (let i = 0; i < numSamples; i++) {
+    for (let ch = 0; ch < numChannels; ch++) {
+      const s = Math.max(-1, Math.min(1, channelData[ch][i]));
+      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+      offset += 2;
+    }
+  }
+  return buffer;
+}
+
+async function blobToWavFile(blob: Blob, filename = 'recording.wav'): Promise<File> {
+  const arrayBuffer = await blob.arrayBuffer();
+  const ctx = new AudioContext();
+  const decoded = await ctx.decodeAudioData(arrayBuffer);
+  await ctx.close();
+
+  const channels: Float32Array[] = [];
+  for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
+    channels.push(decoded.getChannelData(ch));
+  }
+
+  const wavBuffer = writeWav(channels, decoded.sampleRate);
+  return new File([wavBuffer], filename, { type: 'audio/wav' });
+}
 import {
   Dialog,
   DialogContent,
@@ -39,9 +93,9 @@ interface CreateVoiceDialogProps {
 // ─── Live recorder hook ────────────────────────────────────────────────────────
 
 function useRecorder() {
-  const [state, setState] = useState<'idle' | 'requesting' | 'recording' | 'stopped'>('idle');
+  const [state, setState] = useState<'idle' | 'requesting' | 'recording' | 'converting' | 'stopped'>('idle');
   const [elapsed, setElapsed] = useState(0);
-  const [blob, setBlob] = useState<Blob | null>(null);
+  const [blob, setBlob] = useState<Blob | null>(null);   // WAV blob after conversion
   const [permissionDenied, setPermissionDenied] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -92,10 +146,18 @@ function useRecorder() {
     };
 
     mr.onstop = () => {
-      const recorded = new Blob(chunksRef.current, { type: mimeType });
-      setBlob(recorded);
-      setState('stopped');
       stream.getTracks().forEach((t) => t.stop());
+      const raw = new Blob(chunksRef.current, { type: mimeType });
+      setState('converting');
+      // Convert WebM/Opus → WAV so VoiceBox accepts it
+      blobToWavFile(raw).then((wav) => {
+        setBlob(wav);
+        setState('stopped');
+      }).catch(() => {
+        // Fallback: use raw blob and hope VoiceBox accepts it
+        setBlob(raw);
+        setState('stopped');
+      });
     };
 
     mr.start(100);
@@ -132,9 +194,9 @@ function useRecorder() {
 
 // ─── Mini playback for recorded blob ──────────────────────────────────────────
 
-function RecordedAudioPreview({ blob }: { blob: Blob }) {
+function RecordedAudioPreview({ blob, knownDuration }: { blob: Blob; knownDuration: number }) {
   const [playing, setPlaying] = useState(false);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(knownDuration);
   const [current, setCurrent] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const urlRef = useRef<string>('');
@@ -142,7 +204,10 @@ function RecordedAudioPreview({ blob }: { blob: Blob }) {
   useEffect(() => {
     urlRef.current = URL.createObjectURL(blob);
     const a = new Audio(urlRef.current);
-    a.onloadedmetadata = () => setDuration(a.duration);
+    a.onloadedmetadata = () => {
+      // WebM blobs from MediaRecorder often report Infinity — fall back to recorded elapsed time
+      if (isFinite(a.duration) && a.duration > 0) setDuration(a.duration);
+    };
     a.ontimeupdate = () => setCurrent(a.currentTime);
     a.onended = () => { setPlaying(false); setCurrent(0); };
     a.onplay = () => setPlaying(true);
@@ -224,13 +289,11 @@ export function CreateVoiceDialog({ open, onOpenChange }: CreateVoiceDialogProps
     onOpenChange(false);
   }, [resetForm, onOpenChange, recorder]);
 
-  // Build the audio File to submit — either uploaded file or recorded blob
+  // Build the audio File to submit — either uploaded file or WAV-converted recording
   const getAudioFile = (): File | null => {
     if (cloneInputMode === 'upload') return cloneFile;
-    if (recorder.blob) {
-      return new File([recorder.blob], 'recording.webm', { type: recorder.blob.type });
-    }
-    return null;
+    // recorder.blob is already a WAV File after blobToWavFile conversion
+    return recorder.blob as File | null;
   };
 
   const handleCreateClone = async () => {
@@ -402,6 +465,13 @@ export function CreateVoiceDialog({ open, onOpenChange }: CreateVoiceDialogProps
                     </div>
                   )}
 
+                  {recorder.state === 'converting' && (
+                    <div className="flex items-center justify-center gap-2 py-4">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      <span className="text-sm text-muted-foreground">Converting to WAV…</span>
+                    </div>
+                  )}
+
                   {recorder.state === 'recording' && (
                     <div className="space-y-3">
                       {/* Animated waveform bars */}
@@ -461,23 +531,28 @@ export function CreateVoiceDialog({ open, onOpenChange }: CreateVoiceDialogProps
                           <RotateCcw className="h-3.5 w-3.5" /> Redo
                         </Button>
                       </div>
-                      <RecordedAudioPreview blob={recorder.blob} />
+                      <RecordedAudioPreview blob={recorder.blob} knownDuration={recorder.elapsed} />
                     </div>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Reference text — show when any audio is provided */}
+            {/* Reference text — required by VoiceBox when an audio sample is provided */}
             {audioFile && (
               <div className="space-y-2">
-                <Label htmlFor="reference-text">Reference text</Label>
+                <Label htmlFor="reference-text">
+                  Reference text <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="reference-text"
                   value={referenceText}
                   onChange={(e) => setReferenceText(e.target.value)}
                   placeholder="Enter the exact text spoken in the audio..."
                 />
+                <p className="text-xs text-muted-foreground">
+                  Required — must match what is said in the recording.
+                </p>
               </div>
             )}
 
@@ -578,8 +653,10 @@ export function CreateVoiceDialog({ open, onOpenChange }: CreateVoiceDialogProps
             disabled={
               isPending ||
               (mode === 'clone' && !cloneName.trim()) ||
+              (mode === 'clone' && !!audioFile && !referenceText.trim()) ||
               (mode === 'preset' && (!presetName.trim() || !presetVoiceId)) ||
-              recorder.state === 'recording'
+              recorder.state === 'recording' ||
+              recorder.state === 'converting'
             }
           >
             {isPending ? 'Creating...' : 'Create Profile'}

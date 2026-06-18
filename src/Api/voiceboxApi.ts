@@ -368,6 +368,65 @@ export const addStoryItem = (
 export const removeStoryItem = (storyId: string, itemId: string): Promise<void> =>
   vbFetch<void>(`/stories/${storyId}/items/${itemId}`, { method: 'DELETE' });
 
+/** Reorder all items in a story by providing the generation_ids in the desired order. */
+export const reorderStoryItems = (storyId: string, generationIds: string[]): Promise<StoryDetailResponse> =>
+  vbFetch<StoryDetailResponse>(`/stories/${storyId}/items/reorder`, {
+    method: 'PUT',
+    body: JSON.stringify({ generation_ids: generationIds }),
+  });
+
+/** Move a story item to a new start_time_ms (and optionally a new track). */
+export const moveStoryItem = (
+  storyId: string,
+  itemId: string,
+  startTimeMs: number,
+  track = 0,
+): Promise<StoryItemDetail> =>
+  vbFetch<StoryItemDetail>(`/stories/${storyId}/items/${itemId}/move`, {
+    method: 'PUT',
+    body: JSON.stringify({ start_time_ms: startTimeMs, track }),
+  });
+
+/** Trim a story item's audio. trim_end_ms=0 means no end trim. */
+export const trimStoryItem = (
+  storyId: string,
+  itemId: string,
+  trimStartMs: number,
+  trimEndMs: number,
+): Promise<StoryItemDetail> =>
+  vbFetch<StoryItemDetail>(`/stories/${storyId}/items/${itemId}/trim`, {
+    method: 'PUT',
+    body: JSON.stringify({ trim_start_ms: trimStartMs, trim_end_ms: trimEndMs }),
+  });
+
+/** Set volume for a story item. Linear gain: 1.0 = original, 0.0 = silent, max 2.0. */
+export const setStoryItemVolume = (
+  storyId: string,
+  itemId: string,
+  volume: number,
+): Promise<StoryItemDetail> =>
+  vbFetch<StoryItemDetail>(`/stories/${storyId}/items/${itemId}/volume`, {
+    method: 'PUT',
+    body: JSON.stringify({ volume: Math.max(0, Math.min(2, volume)) }),
+  });
+
+/** Duplicate a story item. */
+export const duplicateStoryItem = (storyId: string, itemId: string): Promise<StoryItemDetail> =>
+  vbFetch<StoryItemDetail>(`/stories/${storyId}/items/${itemId}/duplicate`, {
+    method: 'POST',
+  });
+
+/** Split a story item at the given millisecond offset (relative to start). */
+export const splitStoryItem = (
+  storyId: string,
+  itemId: string,
+  splitTimeMs: number,
+): Promise<{ items: StoryItemDetail[] }> =>
+  vbFetch<{ items: StoryItemDetail[] }>(`/stories/${storyId}/items/${itemId}/split`, {
+    method: 'POST',
+    body: JSON.stringify({ split_time_ms: splitTimeMs }),
+  });
+
 /** Returns a direct URL to download the exported story audio. */
 export const getStoryExportUrl = (storyId: string): string =>
   `${BASE_URL}/stories/${storyId}/export-audio`;
