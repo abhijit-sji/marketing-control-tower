@@ -112,10 +112,29 @@ export function AudioPlayer({ src, filename = 'audio.wav', className, compact = 
         >
           {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
         </Button>
-        <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+        {/* Seekable progress bar */}
+        <div
+          className="flex-1 h-2 bg-muted rounded-full overflow-hidden cursor-pointer group relative"
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const ratio = (e.clientX - rect.left) / rect.width;
+            handleSeek([Math.max(0, Math.min(duration, ratio * duration))]);
+          }}
+          onMouseMove={(e) => {
+            if (e.buttons !== 1) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const ratio = (e.clientX - rect.left) / rect.width;
+            handleSeek([Math.max(0, Math.min(duration, ratio * duration))]);
+          }}
+        >
           <div
-            className="h-full bg-primary transition-all"
+            className="h-full bg-primary transition-none rounded-full"
             style={{ width: `${progress}%` }}
+          />
+          {/* Thumb dot */}
+          <div
+            className="absolute top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-primary shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+            style={{ left: `calc(${progress}% - 6px)` }}
           />
         </div>
         <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">

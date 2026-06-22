@@ -85,77 +85,133 @@ function fmtDuration(s: number | null | undefined): string {
   return m > 0 ? `${m}:${String(sec).padStart(4, '0')}` : `${sec}s`;
 }
 
-// ─── Story player button ──────────────────────────────────────────────────────
-// Fetches the merged export audio on demand and plays it in-page.
+// ─── Story player (inline seek bar) ──────────────────────────────────────────
 
-function StoryPlayButton({ storyId, disabled }: { storyId: string; disabled?: boolean }) {
-  const [status, setStatus] = useState<'idle' | 'loading' | 'playing' | 'paused'>('idle');
+function fmt(s: number) {
+  const m = Math.floor(s / 60);
+  return `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+}
+
+interface StoryPlayerProps {
+  storyId: string;
+  disabled?: boolean;
+}
+
+function StoryPlayer({ storyId, disabled }: StoryPlayerProps) {
+  const [status, setStatus] = useState<'idle' | 'loading' | 'ready'>('idle');
+  const [playing, setPlaying] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const urlRef = useRef<string>('');
+  const urlRef = useRef('');
+  const barRef = useRef<HTMLDivElement>(null);
 
-  const stop = () => {
-    audioRef.current?.pause();
-    if (audioRef.current) audioRef.current.currentTime = 0;
+  const cleanup = () => {
+    const a = audioRef.current;
+    if (a) { a.pause(); a.src = ''; }
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
     audioRef.current = null;
     urlRef.current = '';
     setStatus('idle');
+    setPlaying(false);
+    setCurrent(0);
+    setDuration(0);
   };
 
-  useEffect(() => () => stop(), []);
+  useEffect(() => () => cleanup(), []);
 
-  const handlePlay = async () => {
-    if (status === 'playing') {
-      audioRef.current?.pause();
-      setStatus('paused');
-      return;
-    }
-    if (status === 'paused' && audioRef.current) {
-      audioRef.current.play();
-      setStatus('playing');
-      return;
-    }
+  const seek = (clientX: number) => {
+    const bar = barRef.current;
+    const audio = audioRef.current;
+    if (!bar || !audio || duration === 0) return;
+    const rect = bar.getBoundingClientRect();
+    const t = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) * duration;
+    audio.currentTime = t;
+    setCurrent(t);
+  };
 
-    // Fetch the export audio
+  const load = async () => {
     setStatus('loading');
     try {
       const res = await fetch(getStoryExportUrl(storyId));
-      if (!res.ok) throw new Error(`Export failed: ${res.status}`);
+      if (!res.ok) throw new Error(`${res.status}`);
       const blob = await res.blob();
       urlRef.current = URL.createObjectURL(blob);
       const audio = new Audio(urlRef.current);
+      audio.onloadedmetadata = () => setDuration(audio.duration);
+      audio.ontimeupdate = () => setCurrent(audio.currentTime);
+      audio.onended = () => { setPlaying(false); setCurrent(0); };
+      audio.onplay = () => setPlaying(true);
+      audio.onpause = () => setPlaying(false);
       audioRef.current = audio;
-      audio.onended = () => setStatus('idle');
-      audio.onpause = () => {};
+      setStatus('ready');
       await audio.play();
-      setStatus('playing');
     } catch {
       setStatus('idle');
     }
   };
 
+  const toggle = async () => {
+    if (status === 'idle') { await load(); return; }
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) a.pause(); else a.play();
+  };
+
+  const progress = duration > 0 ? (current / duration) * 100 : 0;
+  const active = status === 'ready';
+
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-2 min-w-0 flex-1">
+      {/* Play/Pause */}
       <Button
-        size="sm"
-        variant={status === 'playing' ? 'default' : 'outline'}
-        className="h-7 gap-1 text-xs"
-        onClick={handlePlay}
+        size="icon"
+        variant={playing ? 'default' : 'outline'}
+        className="h-7 w-7 shrink-0"
+        onClick={toggle}
         disabled={disabled || status === 'loading'}
+        title={playing ? 'Pause story' : 'Play story'}
       >
         {status === 'loading' ? (
           <Loader2 className="h-3 w-3 animate-spin" />
-        ) : status === 'playing' ? (
+        ) : playing ? (
           <Pause className="h-3 w-3" />
         ) : (
           <Play className="h-3 w-3" />
         )}
-        {status === 'loading' ? 'Exporting…' : status === 'playing' ? 'Pause' : 'Play Story'}
       </Button>
-      {(status === 'playing' || status === 'paused') && (
-        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={stop} title="Stop">
-          <Square className="h-3 w-3" />
-        </Button>
+
+      {/* Seek bar — only shown once audio is loaded */}
+      {active ? (
+        <>
+          <span className="text-xs tabular-nums text-muted-foreground shrink-0">{fmt(current)}</span>
+          <div
+            ref={barRef}
+            className="flex-1 h-2 bg-muted rounded-full overflow-hidden cursor-pointer group relative min-w-0"
+            onClick={(e) => seek(e.clientX)}
+            onMouseMove={(e) => { if (e.buttons === 1) seek(e.clientX); }}
+          >
+            <div
+              className="h-full bg-primary rounded-full transition-none"
+              style={{ width: `${progress}%` }}
+            />
+            <div
+              className="absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full bg-primary shadow border-2 border-background opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+              style={{ left: `calc(${progress}% - 7px)` }}
+            />
+          </div>
+          <span className="text-xs tabular-nums text-muted-foreground shrink-0">{fmt(duration)}</span>
+          <Button
+            size="icon" variant="ghost" className="h-7 w-7 shrink-0"
+            onClick={cleanup} title="Stop"
+          >
+            <Square className="h-3 w-3" />
+          </Button>
+        </>
+      ) : (
+        <span className="text-xs text-muted-foreground">
+          {status === 'loading' ? 'Exporting & loading…' : 'Play full story'}
+        </span>
       )}
     </div>
   );
@@ -228,7 +284,7 @@ function NarrationRow({
   const removeItem = useRemoveStoryItem();
   const reorder = useReorderStoryItems();
   const duplicate = useDuplicateStoryItem();
-  const [expanded, setExpanded] = useState(false);
+  const [textExpanded, setTextExpanded] = useState(false);
 
   const audioUrl = item.audio_path ? getAudioUrl(item.generation_id) : null;
 
@@ -243,8 +299,8 @@ function NarrationRow({
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
       {/* Header row */}
-      <div className="flex items-center gap-2 px-3 py-2.5">
-        {/* Drag handle / order buttons */}
+      <div className="flex items-center gap-2 px-3 pt-2.5 pb-1.5">
+        {/* Order buttons */}
         <div className="flex flex-col gap-0.5 shrink-0">
           <button
             className="h-4 w-4 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30"
@@ -264,7 +320,7 @@ function NarrationRow({
 
         <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
 
-        {/* Index + name + duration */}
+        {/* Index + name + badges */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className="text-xs font-mono text-muted-foreground w-5 shrink-0">#{index + 1}</span>
           <span className="text-sm font-medium truncate">{item.profile_name}</span>
@@ -285,9 +341,7 @@ function NarrationRow({
         <div className="flex items-center gap-0.5 shrink-0">
           <VolumePopover itemId={item.id} storyId={storyId} volume={item.volume ?? 1} />
           <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7"
+            size="icon" variant="ghost" className="h-7 w-7"
             title="Duplicate"
             onClick={() => duplicate.mutate({ storyId, itemId: item.id })}
             disabled={duplicate.isPending}
@@ -295,37 +349,36 @@ function NarrationRow({
             <Copy className="h-3.5 w-3.5" />
           </Button>
           <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-destructive hover:text-destructive"
+            size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive"
             title="Remove"
             onClick={() => removeItem.mutate({ storyId, itemId: item.id })}
             disabled={removeItem.isPending}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
-          <button
-            className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted transition-colors"
-            onClick={() => setExpanded((v) => !v)}
-          >
-            <ChevronRight
-              className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${expanded ? 'rotate-90' : ''}`}
-            />
-          </button>
         </div>
       </div>
 
-      {/* Text preview */}
-      <div className="px-3 pb-2.5">
-        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{item.text}</p>
-      </div>
-
-      {/* Expanded: audio player */}
-      {expanded && audioUrl && (
-        <div className="px-3 pb-3 pt-1 border-t">
+      {/* Audio player — always visible when audio is ready */}
+      {audioUrl ? (
+        <div className="px-3 pb-2">
           <AudioPlayer src={audioUrl} filename={`narration-${index + 1}.wav`} compact />
         </div>
+      ) : (
+        <div className="px-3 pb-2">
+          <div className="h-2 bg-muted rounded-full animate-pulse" />
+        </div>
       )}
+
+      {/* Text — collapsible */}
+      <div
+        className="px-3 pb-2.5 cursor-pointer"
+        onClick={() => setTextExpanded((v) => !v)}
+      >
+        <p className={`text-xs text-muted-foreground leading-relaxed ${textExpanded ? '' : 'line-clamp-1'}`}>
+          {item.text}
+        </p>
+      </div>
     </div>
   );
 }
@@ -687,51 +740,51 @@ export function StoryStudioTab() {
         ) : (
           <>
             {/* Story header */}
-            <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b shrink-0">
-              <div className="flex items-center gap-3 min-w-0">
-                <h2 className="text-sm font-semibold truncate">{selectedStory?.name}</h2>
-                {totalDuration > 0 && (
-                  <Badge variant="secondary" className="text-xs shrink-0">
-                    {fmtDuration(totalDuration)} total
-                  </Badge>
-                )}
-                {selectedStory?.description && (
-                  <span className="text-xs text-muted-foreground truncate hidden md:block">
-                    {selectedStory.description}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {items.length > 0 && (
-                  <StoryPlayButton storyId={selectedStoryId!} />
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 gap-1 text-xs"
-                  onClick={() => selectedStory && openEdit(selectedStory)}
-                >
-                  <Pencil className="h-3 w-3" /> Edit
-                </Button>
-                {items.length > 0 && (
+            <div className="px-4 pt-2.5 pb-2 border-b shrink-0 space-y-2">
+              {/* Title row */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h2 className="text-sm font-semibold truncate">{selectedStory?.name}</h2>
+                  {totalDuration > 0 && (
+                    <Badge variant="secondary" className="text-xs shrink-0">
+                      {fmtDuration(totalDuration)} total
+                    </Badge>
+                  )}
+                  {selectedStory?.description && (
+                    <span className="text-xs text-muted-foreground truncate hidden md:block">
+                      {selectedStory.description}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
                   <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 gap-1 text-xs"
-                    onClick={handleExportStory}
+                    size="sm" variant="ghost" className="h-7 gap-1 text-xs"
+                    onClick={() => selectedStory && openEdit(selectedStory)}
                   >
-                    <Download className="h-3 w-3" /> Export
+                    <Pencil className="h-3 w-3" /> Edit
                   </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                  {items.length > 0 && (
+                    <Button
+                      size="sm" variant="ghost" className="h-7 gap-1 text-xs"
+                      onClick={handleExportStory}
+                    >
+                      <Download className="h-3 w-3" /> Export
+                    </Button>
+                  )}
+                  <Button
+                    size="sm" variant="ghost"
+                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
+
+              {/* Story-level player — full-width seek bar */}
+              {items.length > 0 && (
+                <StoryPlayer storyId={selectedStoryId!} />
+              )}
             </div>
 
             {/* Narration list */}
