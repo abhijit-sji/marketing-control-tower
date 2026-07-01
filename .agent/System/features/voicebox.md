@@ -160,7 +160,25 @@ All hooks use `voiceboxKeys` for structured query keys:
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `VITE_VOICEBOX_URL` | `http://127.0.0.1:17493` | VoiceBox API base URL. Change for remote deployment. |
+| `VITE_VOICEBOX_URL` | `http://127.0.0.1:17493` | VoiceBox API base URL. Set to `https://abhijit-sji-voicebox.hf.space` for production. |
+| `VITE_VOICEBOX_USE_PROXY` | _(unset)_ | Set to `"true"` to route all VoiceBox calls through the `voicebox-proxy` Supabase edge function instead of calling the HF Space directly. Use if HF CORS cannot be configured. |
+
+## Production Deployment (Hugging Face Spaces)
+
+The VoiceBox backend is deployed at **[https://huggingface.co/spaces/Abhijit-sji/voicebox](https://huggingface.co/spaces/Abhijit-sji/voicebox)** (port 17493, Docker).
+
+The HF Space repo lives at `/home/abhijit/Documents/workspace/hackathon/hf-voicebox-space`.
+
+### Connecting Marketing Hub
+
+**Development:** `VITE_VOICEBOX_URL` defaults to `http://127.0.0.1:17493`; the Vite dev server proxies `/voicebox-proxy` to avoid CORS.
+
+**Production (Vercel):**
+1. Set `VITE_VOICEBOX_URL=https://abhijit-sji-voicebox.hf.space` in Vercel project settings.
+2. Set `VOICEBOX_CORS_ORIGINS=https://your-app.vercel.app` in the HF Space settings → Variables.
+3. Redeploy both.
+
+**CORS fallback:** If direct HF calls still fail in the browser, set `VITE_VOICEBOX_USE_PROXY=true` on Vercel. This routes all VoiceBox API traffic through the `voicebox-proxy` Supabase edge function (`supabase/functions/voicebox-proxy/index.ts`), which adds CORS headers server-side. The edge function requires `VOICEBOX_URL` set in Supabase secrets.
 
 ---
 

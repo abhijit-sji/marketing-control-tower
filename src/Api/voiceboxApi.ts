@@ -1,12 +1,29 @@
-// VoiceBox API client — calls VoiceBox via a same-origin Vite proxy in development
-// to avoid CORS preflight errors. In production (remote VoiceBox URL) the full URL is used.
+// VoiceBox API client — routes differ by environment:
+//
+//  Local dev   VITE_VOICEBOX_URL=http://127.0.0.1:17493
+//              → Vite /voicebox-proxy (same-origin, no CORS issue)
+//
+//  Production  VITE_VOICEBOX_URL=https://abhijit-sji-voicebox.hf.space
+//              → direct fetch (CORS allowed via VOICEBOX_CORS_ORIGINS on HF)
+//
+//  Fallback    VITE_VOICEBOX_USE_PROXY=true
+//              → route through Supabase voicebox-proxy edge function
+//              Use this if HF CORS cannot be configured correctly.
 
 const configuredUrl = (import.meta.env.VITE_VOICEBOX_URL as string | undefined) ?? 'http://127.0.0.1:17493';
+const useSupabaseProxy = import.meta.env.VITE_VOICEBOX_USE_PROXY === 'true';
 
-// If VoiceBox is running locally, route through the Vite dev-server proxy at /voicebox-proxy
-// so the browser sees same-origin requests (no CORS). If it's a remote host, use it directly.
 const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test(configuredUrl);
-const BASE_URL = isLocalhost ? '/voicebox-proxy' : configuredUrl;
+
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? '';
+// Supabase edge function proxy: /functions/v1/voicebox-proxy/<path>
+const SUPABASE_PROXY_BASE = `${SUPABASE_URL}/functions/v1/voicebox-proxy`;
+
+const BASE_URL = isLocalhost
+  ? '/voicebox-proxy'
+  : useSupabaseProxy
+    ? SUPABASE_PROXY_BASE
+    : configuredUrl;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -218,11 +235,18 @@ export class VoiceBoxError extends Error {
 async function vbFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${BASE_URL}${path}`;
   let response: Response;
+  // When routing through the Supabase edge function, include the public anon key
+  // so the function is reachable (it has JWT verification disabled, but the key
+  // is still required by the Supabase gateway).
+  const supabaseAnonKey = useSupabaseProxy
+    ? (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ?? ''
+    : undefined;
   try {
     response = await fetch(url, {
       ...init,
       headers: {
         ...(init?.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+        ...(supabaseAnonKey ? { apikey: supabaseAnonKey } : {}),
         ...init?.headers,
       },
     });
