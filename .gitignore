@@ -12,7 +12,13 @@ dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -23,3 +29,6 @@ dist-ssr
 *.sln
 *.sw?
 supabase/.temp/
+
+# Editor directories and files
+.env*

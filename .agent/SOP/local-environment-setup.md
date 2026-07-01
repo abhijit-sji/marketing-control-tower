@@ -265,7 +265,48 @@ npm run lint
 
 ## 🚢 Deployment
 
-The project is deployed via Lovable with automatic deployment from main branch.
+### Vercel (frontend)
+
+The React/Vite frontend deploys to **Vercel**. Supabase Edge Functions and the database remain on Supabase.
+
+**Production URL:** https://marketing-control-tower-mocha.vercel.app
+
+**Vercel account:** [abhijitsarker-3949s-projects](https://vercel.com/abhijitsarker-3949s-projects/marketing-control-tower)
+
+**Config:** `vercel.json` at repo root (Vite build → `dist/`, SPA rewrites for React Router).
+
+**Environment variables** (set in Vercel → Project → Settings → Environment Variables):
+
+| Variable | Required |
+|----------|----------|
+| `VITE_SUPABASE_URL` | Yes |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Yes |
+| `VITE_SUPABASE_PROJECT_ID` | Yes |
+| `VITE_VOICEBOX_URL` | Optional |
+
+See `.env.example` for the full list.
+
+**Deploy commands:**
+
+```bash
+npm i -g vercel@latest
+vercel link          # first time only
+vercel deploy --prod # production deploy
+```
+
+**Post-deploy checklist:**
+
+1. Supabase → Authentication → URL Configuration: add `https://marketing-control-tower-mocha.vercel.app/**` to Redirect URLs and set Site URL.
+2. Google OAuth (if used): add `https://<your-domain>/google-drive-callback` to authorized redirect URIs.
+3. VoiceBox (if used): set `VOICEBOX_CORS_ORIGINS` on the HF Space, or `VITE_VOICEBOX_USE_PROXY=true` on Vercel.
+
+### Supabase (backend)
+
+Edge functions deploy separately:
+
+```bash
+supabase functions deploy
+```
 
 ---
 

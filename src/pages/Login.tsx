@@ -150,7 +150,7 @@ export default function Login() {
     setResetLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: 'https://marketing.sjinnovation.us/reset-password',
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) throw error;
