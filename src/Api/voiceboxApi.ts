@@ -329,14 +329,50 @@ export const getProfileAvatarUrl = (profileId: string): string =>
 
 // ─── Generate (TTS) operations ───────────────────────────────────────────────
 
-export const generateSpeech = (body: GenerationRequest): Promise<GenerationResponse> =>
-  vbFetch<GenerationResponse>('/generate', {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
+type ProfileEngineHint = Pick<
+  VoiceProfileResponse,
+  'voice_type' | 'preset_engine' | 'default_engine'
+>;
 
-export const getGenerationStatus = (id: string): Promise<GenerationResponse> =>
-  vbFetch<GenerationResponse>(`/generate/${id}/status`);
+/**
+ * Resolve which engine to send on POST /generate.
+ *
+ * VoiceBox's Pydantic model defaults `engine` to "qwen" when the field is
+ * omitted from JSON. For preset profiles or "auto" mode we must either send
+ * the profile's preset/default engine explicitly, or send `null` so the
+ * server falls back to profile metadata.
+ */
+export function resolveGenerationEngine(
+  profile: ProfileEngineHint | undefined,
+  engineOverride?: GenerationEngine | null,
+): GenerationEngine | null {
+  if (profile?.voice_type === 'preset') {
+    return (profile.preset_engine ?? profile.default_engine ?? 'kokoro') as GenerationEngine;
+  }
+  if (engineOverride) {
+    return engineOverride;
+  }
+  return null;
+}
+
+export const generateSpeech = (body: GenerationRequest): Promise<GenerationResponse> => {
+  // Never omit engine — omitted field becomes "qwen" on the server
+  const payload: GenerationRequest = {
+    ...body,
+    engine: body.engine === undefined ? null : body.engine,
+  };
+  return vbFetch<GenerationResponse>('/generate', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
+/**
+ * Poll generation progress. VoiceBox exposes `/generate/{id}/status` as SSE only;
+ * the history endpoint returns the same status fields as JSON for polling.
+ */
+export const getGenerationStatus = (id: string): Promise<HistoryResponse> =>
+  vbFetch<HistoryResponse>(`/history/${id}`);
 
 /** Returns a direct URL to the audio file for use in <audio src> or download. */
 export const getAudioUrl = (generationId: string): string =>
@@ -395,8 +431,8 @@ export const removeStoryItem = (storyId: string, itemId: string): Promise<void> 
   vbFetch<void>(`/stories/${storyId}/items/${itemId}`, { method: 'DELETE' });
 
 /** Reorder all items in a story by providing the generation_ids in the desired order. */
-export const reorderStoryItems = (storyId: string, generationIds: string[]): Promise<StoryDetailResponse> =>
-  vbFetch<StoryDetailResponse>(`/stories/${storyId}/items/reorder`, {
+export const reorderStoryItems = (storyId: string, generationIds: string[]): Promise<StoryItemDetail[]> =>
+  vbFetch<StoryItemDetail[]>(`/stories/${storyId}/items/reorder`, {
     method: 'PUT',
     body: JSON.stringify({ generation_ids: generationIds }),
   });

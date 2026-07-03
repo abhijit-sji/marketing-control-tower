@@ -34,7 +34,8 @@ import {
   SUPPORTED_LANGUAGES,
   SUPPORTED_ENGINES,
 } from '@/features/voicebox/types';
-import { getAudioUrl, getExportAudioUrl } from '@/Api/voiceboxApi';
+import { getAudioUrl, getExportAudioUrl, resolveGenerationEngine } from '@/Api/voiceboxApi';
+import type { GenerationEngine } from '@/Api/voiceboxApi';
 import { Star, Trash2, Download } from 'lucide-react';
 
 // Sentinel for the "auto" engine option — Radix Select forbids empty-string values
@@ -68,7 +69,7 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
   const toggleFav = useToggleFavorite();
 
   // Poll the active generation until it completes
-  const { data: statusData } = useGenerationStatus(currentGenId, currentGenId !== null);
+  const { data: statusData, isFetching } = useGenerationStatus(currentGenId, currentGenId !== null);
 
   // When generation reaches a terminal state, refresh history and stop polling
   useEffect(() => {
@@ -80,12 +81,15 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
   }, [statusData?.status, refetchHistory]);
 
   // ── Derived ────────────────────────────────────────────────────────────────
-  const isProcessing =
-    isGenerating ||
+  const inProgressStatus =
     statusData?.status === 'processing' ||
     statusData?.status === 'loading_model' ||
     statusData?.status === 'generating' ||
     statusData?.status === 'queued';
+
+  const isProcessing =
+    isGenerating ||
+    (currentGenId !== null && (isFetching || inProgressStatus));
 
   const processingLabel = isGenerating
     ? 'Sending request...'
@@ -120,17 +124,14 @@ export function TTSTab({ initialText = '', initialProfileId }: TTSTabProps) {
     setCurrentGenId(null);
     setIsGenerating(true);
     try {
-      // Preset profiles enforce their own engine — never pass an engine override for them
-      const engineOverride =
-        selectedProfile?.voice_type === 'preset' || engine === ENGINE_AUTO
-          ? undefined
-          : (engine as any);
-
       const result = await generate.mutateAsync({
         profile_id: profileId,
         text: text.trim(),
         language,
-        engine: engineOverride,
+        engine: resolveGenerationEngine(
+          selectedProfile,
+          engine === ENGINE_AUTO ? undefined : (engine as GenerationEngine),
+        ),
       });
       if (result?.id) setCurrentGenId(result.id);
     } finally {

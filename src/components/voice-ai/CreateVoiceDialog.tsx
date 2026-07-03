@@ -81,6 +81,7 @@ import {
   SUPPORTED_LANGUAGES,
   PRESET_ENGINES,
 } from '@/features/voicebox/types';
+import type { GenerationEngine } from '@/Api/voiceboxApi';
 import { useToast } from '@/hooks/use-toast';
 
 const MAX_RECORD_SECONDS = 30;
@@ -336,6 +337,7 @@ export function CreateVoiceDialog({ open, onOpenChange }: CreateVoiceDialogProps
       voice_type: 'preset',
       preset_engine: presetEngine,
       preset_voice_id: presetVoiceId,
+      default_engine: presetEngine as GenerationEngine,
     });
 
     handleClose();

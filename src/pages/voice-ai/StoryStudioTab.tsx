@@ -67,13 +67,15 @@ import {
   useGenerateSpeech,
   useGenerationStatus,
   useVoiceProfiles,
+  useHistory,
 } from '@/features/voicebox/hooks';
 import {
   TTS_MAX_CHARS,
   SUPPORTED_ENGINES,
   SUPPORTED_LANGUAGES,
 } from '@/features/voicebox/types';
-import { getAudioUrl, getStoryExportUrl } from '@/Api/voiceboxApi';
+import { getAudioUrl, getStoryExportUrl, resolveGenerationEngine } from '@/Api/voiceboxApi';
+import type { GenerationEngine } from '@/Api/voiceboxApi';
 import type { StoryResponse, StoryItemDetail } from '@/features/voicebox/types';
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
@@ -286,7 +288,8 @@ function NarrationRow({
   const duplicate = useDuplicateStoryItem();
   const [textExpanded, setTextExpanded] = useState(false);
 
-  const audioUrl = item.audio_path ? getAudioUrl(item.generation_id) : null;
+  const audioUrl = item.generation_id ? getAudioUrl(item.generation_id) : null;
+  const hasAudio = !!item.audio_path;
 
   const move = (direction: 'up' | 'down') => {
     const ids = allItems.map((i) => i.generation_id);
@@ -359,16 +362,16 @@ function NarrationRow({
         </div>
       </div>
 
-      {/* Audio player — always visible when audio is ready */}
-      {audioUrl ? (
+      {/* Audio player — visible when generation is linked */}
+      {audioUrl && hasAudio ? (
         <div className="px-3 pb-2">
           <AudioPlayer src={audioUrl} filename={`narration-${index + 1}.wav`} compact />
         </div>
-      ) : (
+      ) : audioUrl ? (
         <div className="px-3 pb-2">
           <div className="h-2 bg-muted rounded-full animate-pulse" />
         </div>
-      )}
+      ) : null}
 
       {/* Text — collapsible */}
       <div
@@ -380,6 +383,110 @@ function NarrationRow({
         </p>
       </div>
     </div>
+  );
+}
+
+// ─── Add existing generation from history ─────────────────────────────────────
+
+function AddFromHistoryDialog({
+  storyId,
+  open,
+  onOpenChange,
+  onAdded,
+  existingGenerationIds,
+}: {
+  storyId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onAdded: () => void;
+  existingGenerationIds: Set<string>;
+}) {
+  const [search, setSearch] = useState('');
+  const { data: historyData, isLoading } = useHistory(100);
+  const addItem = useAddStoryItem();
+
+  const completed = (historyData?.items ?? []).filter(
+    (g) => g.status === 'completed' && g.audio_path,
+  );
+
+  const filtered = completed.filter((g) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      g.text.toLowerCase().includes(q) ||
+      g.profile_name.toLowerCase().includes(q)
+    );
+  });
+
+  const handleAdd = (generationId: string) => {
+    addItem.mutate(
+      { storyId, generationId },
+      {
+        onSuccess: () => {
+          onAdded();
+          onOpenChange(false);
+          setSearch('');
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Add from history</DialogTitle>
+        </DialogHeader>
+        <Input
+          placeholder="Search by text or voice name…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          autoFocus
+        />
+        <ScrollArea className="h-72 pr-2">
+          {isLoading ? (
+            <div className="space-y-2 p-1">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-14" />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No completed generations found. Generate speech on the TTS tab first.
+            </p>
+          ) : (
+            <div className="space-y-1.5 p-1">
+              {filtered.map((gen) => {
+                const alreadyInStory = existingGenerationIds.has(gen.id);
+                return (
+                  <div
+                    key={gen.id}
+                    className="flex items-start gap-2 rounded-md border p-2.5 hover:bg-muted/50"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate">{gen.profile_name}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{gen.text}</p>
+                      {gen.duration != null && (
+                        <span className="text-xs text-muted-foreground">{fmtDuration(gen.duration)}</span>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={alreadyInStory ? 'secondary' : 'outline'}
+                      className="shrink-0 h-7 text-xs"
+                      disabled={alreadyInStory || addItem.isPending}
+                      onClick={() => handleAdd(gen.id)}
+                    >
+                      {alreadyInStory ? 'In story' : 'Add'}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -398,6 +505,7 @@ function NarrationComposer({
   const [engine, setEngine] = useState(ENGINE_AUTO);
   const [isGenerating, setIsGenerating] = useState(false);
   const [pendingGenId, setPendingGenId] = useState<string | null>(null);
+  const addedGenRef = useRef<string | null>(null);
 
   const { data: profiles = [] } = useVoiceProfiles();
   const generate = useGenerateSpeech();
@@ -413,50 +521,66 @@ function NarrationComposer({
     if (selectedProfile?.voice_type === 'preset') setEngine(ENGINE_AUTO);
   }, [selectedProfile?.id, selectedProfile?.voice_type]);
 
-  const { data: statusData } = useGenerationStatus(pendingGenId, pendingGenId !== null);
+  const { data: statusData, isFetching, isError } = useGenerationStatus(
+    pendingGenId,
+    pendingGenId !== null,
+  );
 
-  const isCompleted = statusData?.status === 'completed' && !!statusData.audio_path;
-  const isFailed = statusData?.status === 'failed';
-  const isPolling =
+  const isCompleted = statusData?.status === 'completed';
+  const isFailed = statusData?.status === 'failed' || isError;
+  const inProgressStatus =
     statusData?.status === 'processing' ||
     statusData?.status === 'loading_model' ||
     statusData?.status === 'generating' ||
     statusData?.status === 'queued';
 
-  const audioUrl = isCompleted && pendingGenId ? getAudioUrl(pendingGenId) : null;
+  // Only poll while we have an active pending generation — undefined statusData
+  // when idle must NOT read as "processing" (was causing permanent Processing… UI)
+  const isPolling =
+    pendingGenId !== null && (isFetching || inProgressStatus || (!statusData && !isError));
 
   // Auto-add to story when generation completes
   useEffect(() => {
-    if (isCompleted && pendingGenId) {
-      addItem.mutateAsync({ storyId, generationId: pendingGenId }).then(() => {
+    if (!isCompleted || !pendingGenId) return;
+    if (addedGenRef.current === pendingGenId) return;
+    addedGenRef.current = pendingGenId;
+
+    addItem
+      .mutateAsync({ storyId, generationId: pendingGenId })
+      .then(() => {
         setPendingGenId(null);
         setText('');
+        addedGenRef.current = null;
         onAdded();
+      })
+      .catch(() => {
+        addedGenRef.current = null;
       });
-    }
-  }, [isCompleted, pendingGenId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- addItem/onAdded intentionally omitted
+  }, [isCompleted, pendingGenId, storyId]);
 
   useEffect(() => {
     const s = statusData?.status;
-    if (s === 'failed' || s === 'cancelled' || s === 'canceled') {
+    if (s === 'failed' || s === 'cancelled' || s === 'canceled' || isError) {
       setPendingGenId(null);
+      addedGenRef.current = null;
     }
-  }, [statusData?.status]);
+  }, [statusData?.status, isError]);
 
   const handleGenerate = async () => {
     if (!profileId || !text.trim()) return;
     setPendingGenId(null);
+    addedGenRef.current = null;
     setIsGenerating(true);
     try {
-      const engineOverride =
-        selectedProfile?.voice_type === 'preset' || engine === ENGINE_AUTO
-          ? undefined
-          : (engine as any);
       const result = await generate.mutateAsync({
         profile_id: profileId,
         text: text.trim(),
         language,
-        engine: engineOverride,
+        engine: resolveGenerationEngine(
+          selectedProfile,
+          engine === ENGINE_AUTO ? undefined : (engine as GenerationEngine),
+        ),
       });
       if (result?.id) setPendingGenId(result.id);
     } finally {
@@ -469,14 +593,14 @@ function NarrationComposer({
 
   const statusLabel = isGenerating
     ? 'Sending…'
-    : statusData?.status === 'loading_model'
+    : addItem.isPending
+    ? 'Adding to story…'
+    : pendingGenId && statusData?.status === 'loading_model'
     ? 'Loading model…'
-    : statusData?.status === 'generating'
+    : pendingGenId && statusData?.status === 'generating'
     ? 'Generating…'
     : isPolling
     ? 'Processing…'
-    : addItem.isPending
-    ? 'Adding to story…'
     : null;
 
   return (
@@ -535,7 +659,7 @@ function NarrationComposer({
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value.slice(0, TTS_MAX_CHARS))}
-            placeholder={`Generate speech for "${''}"…`}
+            placeholder="Type narration text here… (Ctrl+Enter to generate)"
             rows={2}
             className="resize-none text-sm pr-14"
             onKeyDown={(e) => {
@@ -573,7 +697,7 @@ function NarrationComposer({
           {statusLabel}
         </div>
       )}
-      {isCompleted && audioUrl && (
+      {isCompleted && addItem.isPending && (
         <div className="flex items-center gap-2 text-xs text-green-600">
           <Check className="h-3 w-3" />
           Generation complete — adding to story…
@@ -596,6 +720,7 @@ export function StoryStudioTab() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const [storyName, setStoryName] = useState('');
   const [storyDesc, setStoryDesc] = useState('');
@@ -662,6 +787,7 @@ export function StoryStudioTab() {
 
   const items: StoryItemDetail[] = storyDetail?.items ?? [];
   const totalDuration = items.reduce((sum, i) => sum + (i.duration ?? 0), 0);
+  const existingGenerationIds = new Set(items.map((i) => i.generation_id));
 
   return (
     <div className="flex gap-0 h-[calc(100vh-260px)] min-h-[520px]">
@@ -758,6 +884,12 @@ export function StoryStudioTab() {
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <Button
+                    size="sm" variant="outline" className="h-7 gap-1 text-xs"
+                    onClick={() => setHistoryOpen(true)}
+                  >
+                    <Plus className="h-3 w-3" /> From history
+                  </Button>
+                  <Button
                     size="sm" variant="ghost" className="h-7 gap-1 text-xs"
                     onClick={() => selectedStory && openEdit(selectedStory)}
                   >
@@ -796,9 +928,9 @@ export function StoryStudioTab() {
               </div>
             ) : (
               <ScrollArea className="flex-1">
-                <div className="p-4 space-y-2">
+                <div className="p-4 space-y-2 min-h-full">
                   {items.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 gap-3 text-center border border-dashed rounded-lg">
+                    <div className="flex flex-col items-center justify-center min-h-[200px] gap-3 text-center border border-dashed rounded-lg py-12">
                       <Sparkles className="h-8 w-8 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
                         No narrations yet. Use the composer below to add voice lines.
@@ -820,14 +952,25 @@ export function StoryStudioTab() {
               </ScrollArea>
             )}
 
-            {/* Inline composer */}
+            {/* Inline composer — reset when switching stories */}
             <NarrationComposer
+              key={selectedStoryId}
               storyId={selectedStoryId!}
               onAdded={() => refetchDetail()}
             />
           </>
         )}
       </div>
+
+      {selectedStoryId && (
+        <AddFromHistoryDialog
+          storyId={selectedStoryId}
+          open={historyOpen}
+          onOpenChange={setHistoryOpen}
+          onAdded={() => refetchDetail()}
+          existingGenerationIds={existingGenerationIds}
+        />
+      )}
 
       {/* Create story dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
