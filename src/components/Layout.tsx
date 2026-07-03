@@ -99,7 +99,7 @@ const Layout = () => {
       { name: "AI TOOLS", href: "", icon: null, current: false, isHeader: true },
       { name: "Video AI", href: "/workspace", icon: Video, current: false },
       { name: "Image AI", href: "/image-ai", icon: ImageIcon, current: false },
-      { name: "Voice AI", href: "/voice-ai", icon: Mic, current: false }
+      { name: "SJ SoundLab", href: "/voice-ai", icon: Mic, current: false }
     );
 
     // Add Post Generation for PM and above
